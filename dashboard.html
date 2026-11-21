@@ -100,6 +100,19 @@ details.grp[open] > summary::after { content:"–"; }
 .sw input:checked + span::after { transform:translateX(20px); }
 .sw input:focus-visible + span { outline:2px solid var(--accent); outline-offset:3px; }
 .save { position:sticky; bottom:16px; margin-top:18px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding:14px 18px; border-radius:18px; border:1px solid var(--accent); background:rgba(20,14,40,.94); box-shadow:0 10px 40px rgba(0,0,0,.5); z-index:5; }
+.drow { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px 16px; align-items:center; padding:14px 16px; border:1px solid var(--line); border-radius:14px; background:var(--card); margin-bottom:10px; }
+.drow .nm { font-weight:700; overflow-wrap:anywhere; }
+.drow .meta { font-size:.82rem; color:var(--muted); overflow-wrap:anywhere; }
+.badge { display:inline-block; font:600 .68rem/1 var(--font); letter-spacing:.08em; text-transform:uppercase; border:1px solid var(--line); border-radius:99px; padding:4px 8px; margin-left:8px; color:var(--muted); vertical-align:2px; }
+.badge.red { border-color:rgba(255,120,140,.6); color:#FFB3BF; }
+button.danger { border-color:rgba(255,120,140,.55); color:#FFB3BF; }
+button.danger:hover { background:rgba(255,90,120,.12); border-color:rgba(255,120,140,.8); }
+.devbar { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; border:1px solid rgba(255,200,87,.5); background:rgba(255,200,87,.07); border-radius:14px; padding:10px 16px; margin-bottom:18px; font-size:.9rem; }
+.field { display:block; margin:0 0 14px; }
+.field > span { display:block; font:600 .85rem var(--font); margin-bottom:6px; }
+.chk { display:flex; gap:10px; align-items:flex-start; margin:0 0 10px; font-size:.92rem; }
+.chk input { margin-top:4px; }
+@media (max-width:640px) { .drow { grid-template-columns:1fr; } }
 .skel { color:var(--faint); padding:40px 0; text-align:center; }
 footer { margin-top:60px; padding-top:20px; border-top:1px dashed var(--line); color:var(--faint); font-size:.88rem; }
 @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } .sw span, .sw span::after { transition:none; } }
@@ -120,7 +133,7 @@ footer { margin-top:60px; padding-top:20px; border-top:1px dashed var(--line); c
 "use strict";
 const API = "https://api.spectrebot.org";        /* where the bot's dashboard server lives */
 const app = document.getElementById("app"), meBox = document.getElementById("me");
-let me = null;
+let me = null, isOwner = false, devUnlocked = false, devTimer = null;
 
 /* tiny safe DOM builder: all data goes in as text, never as HTML */
 function h(tag, props, ...kids) {
@@ -187,9 +200,10 @@ function showMe() {
   clear(meBox);
   if (!me) return;
   if (me.avatar) meBox.append(h("img", { src: me.avatar, alt: "", width: 30, height: 30 }));
+  if (isOwner) meBox.append(h("a", { class: "btn", href: "#/dev" }, "Developer Mode"));
   meBox.append(h("span", null, me.name), h("button", { onclick: logout }, "Log out"));
 }
-async function logout() { try { await api("/api/logout", { method: "POST", body: "{}" }); } catch (e) {} me = null; location.hash = "#/"; viewLogin(); }
+async function logout() { try { await api("/api/logout", { method: "POST", body: "{}" }); } catch (e) {} me = null; isOwner = devUnlocked = false; location.hash = "#/"; viewLogin(); }
 
 /* ---------------------------------------------------------------- server shell + tabs */
 const TABS = [["overview", "Overview"], ["analytics", "Analytics"], ["settings", "Settings"]];
@@ -199,11 +213,12 @@ async function openGuild(id, tab) {
   tab = TABS.some((t) => t[0] === tab) ? tab : "overview";
   let ov;
   try { ov = await api(`/api/guilds/${id}/overview`); }
-  catch (e) { if (e.status === 401) return viewLogin(banner("err", "Your session ended. Please log in again.")); setApp(banner("err", e.message), h("a", { href: "#/" }, "← All servers")); return; }
+  catch (e) { if (e.status === 401) return viewLogin(banner("err", "Your session ended. Please log in again.")); setApp(banner("err", e.message), isOwner && !devUnlocked ? h("p", null, h("a", { href: "#/dev" }, "Unlock Developer Mode"), " to open servers you don't manage.") : null, h("a", { href: "#/" }, "← All servers")); return; }
   current = { id, ov };
   const body = h("div");
   setApp(
-    h("a", { class: "back", href: "#/" }, "← All servers"),
+    devUnlocked ? h("div", { class: "devbar" }, h("span", null, "Developer Mode is on. Changes you make here are logged to the server's log channel with your name."), h("a", { href: "#/dev" }, "← Back to Developer Mode")) : null,
+    h("a", { class: "back", href: devUnlocked ? "#/dev" : "#/" }, devUnlocked ? "← Developer Mode" : "← All servers"),
     h("div", { class: "top", style: "margin-top:10px" },
       ov.icon ? h("img", { class: "ic", src: ov.icon, alt: "", width: 52, height: 52 }) : h("div", { class: "ic", "aria-hidden": "true" }),
       h("div", null, h("h1", { style: "margin:0;font-size:1.8rem" }, ov.name), h("span", { class: "muted" }, num(ov.members) + " members"))),
@@ -360,12 +375,119 @@ async function renderSettings(box, id) {
 }
 
 /* ---------------------------------------------------------------- routing */
+/* ---------------------------------------------------------------- Developer Mode (bot owners only) */
+const when = (t) => t ? new Date(t * 1000).toLocaleString() : "unknown";
+const ownerRight = () => { if (!isOwner) { location.hash = "#/"; return false; } return true; };
+
+function devLockedView(note) {
+  const input = h("input", { type: "text", id: "ownerid", inputmode: "numeric", autocomplete: "off", spellcheck: "false", placeholder: "Your Discord user ID", maxlength: 25 });
+  const msg = h("div");
+  const go = async () => {
+    clear(msg);
+    try { await api("/api/dev/unlock", { method: "POST", body: JSON.stringify({ owner_id: input.value.trim() }) }); devUnlocked = true; showDevTimer(); viewDev(); }
+    catch (e) { msg.append(banner("err", e.status === 403 ? "That didn't unlock. It only works for the bot owners, signed in with their own Discord account." : e.message)); }
+  };
+  input.addEventListener("keydown", (ev) => { if (ev.key === "Enter") go(); });
+  setApp(h("a", { class: "back", href: "#/" }, "← All servers"), h("h1", null, "Developer Mode"), note,
+    h("div", { class: "card", style: "max-width:560px" },
+      h("p", null, "This is for Spectre's owners. You can see every server Spectre is in, open any server's dashboard, and remove the bot from servers that break the rules."),
+      h("p", { class: "muted" }, "Unlock it by typing your own Discord user ID. It also checks that you are signed in as a bot owner, so typing someone else's ID won't work. It locks again after 15 minutes."),
+      h("label", { class: "field" }, h("span", null, "Owner user ID"), input), msg,
+      h("button", { class: "primary", onclick: go }, "Unlock Developer Mode")));
+  input.focus();
+}
+function showDevTimer() { clearTimeout(devTimer); devTimer = setTimeout(() => { devUnlocked = false; if (location.hash === "#/dev") viewDev(); }, 15 * 60 * 1000); }
+
+async function viewDev(tab) {
+  if (!ownerRight()) return;
+  if (!devUnlocked) return devLockedView();
+  tab = tab || "servers";
+  const body = h("div");
+  const tabBtn = (k, label) => h("button", { role: "tab", "aria-selected": String(k === tab), onclick: () => viewDev(k) }, label);
+  setApp(h("a", { class: "back", href: "#/" }, "← All servers"), h("h1", null, "Developer Mode"),
+    h("div", { class: "devbar" }, h("span", null, "Unlocked for 15 minutes. Everything here is logged with your name."),
+      h("button", { onclick: async () => { try { await api("/api/dev/lock", { method: "POST", body: "{}" }); } catch (e) {} devUnlocked = false; clearTimeout(devTimer); viewDev(); } }, "Lock now")),
+    h("div", { class: "tabs", role: "tablist" }, tabBtn("servers", "All servers"), tabBtn("history", "History & blocklist")), body);
+  try { if (tab === "servers") await devServers(body); else await devHistory(body); }
+  catch (e) { if (e.status === 403) { devUnlocked = false; return devLockedView(banner("err", "Developer Mode locked. Unlock it again.")); } if (e.status === 401) return viewLogin(banner("err", "Your session ended. Please log in again.")); clear(body).append(banner("err", e.message)); }
+}
+
+async function devServers(box) {
+  const { guilds } = await api("/api/dev/guilds");
+  const q = h("input", { type: "text", placeholder: "Search by name, server ID or owner ID", "aria-label": "Search servers" });
+  const list = h("div");
+  const draw = () => {
+    const t = q.value.trim().toLowerCase();
+    const rows = guilds.filter((g) => !t || g.name.toLowerCase().includes(t) || g.id.includes(t) || (g.owner_id || "").includes(t) || (g.owner_name || "").toLowerCase().includes(t));
+    clear(list).append(...(rows.length ? rows.map(devRow) : [h("p", { class: "muted" }, "No servers match.")]));
+  };
+  function devRow(g) {
+    const slot = h("div", { style: "grid-column:1/-1" });
+    const row = h("div", { class: "drow" },
+      h("div", null,
+        h("div", { class: "nm" }, g.name, g.blocked ? h("span", { class: "badge red" }, "blocked") : null),
+        h("div", { class: "meta" }, `${num(g.members)} members · ID ${g.id} · owner ${g.owner_name ? g.owner_name + " " : ""}(${g.owner_id || "?"}) · Spectre added ${when(g.joined)} · created ${when(g.created)}`)),
+      h("div", { class: "row" },
+        h("a", { class: "btn", href: `#/g/${g.id}/overview` }, "Open dashboard"),
+        h("button", { class: "danger", onclick: () => removeForm(g, slot, row) }, "Remove bot…")),
+      slot);
+    return row;
+  }
+  function removeForm(g, slot, row) {
+    if (slot.firstChild) return clear(slot);
+    const reason = h("textarea", { maxlength: 300, placeholder: "Why? For example: raid server, harassment, breaks the Discord ToS. This is saved with the action." });
+    const notify = h("input", { type: "checkbox", checked: true }), block = h("input", { type: "checkbox", checked: true });
+    const confirm = h("input", { type: "text", inputmode: "numeric", autocomplete: "off", placeholder: g.id });
+    const msg = h("div"), go = h("button", { class: "danger", disabled: true }, "Remove Spectre from this server");
+    const ready = () => { go.disabled = !(reason.value.trim().length >= 3 && confirm.value.trim() === g.id); };
+    reason.addEventListener("input", ready); confirm.addEventListener("input", ready);
+    go.addEventListener("click", async () => {
+      go.disabled = true; clear(msg);
+      try {
+        const r = await api(`/api/dev/guilds/${g.id}/leave`, { method: "POST", body: JSON.stringify({ reason: reason.value.trim(), notify: notify.checked, block: block.checked, confirm: confirm.value.trim() }) });
+        const i = guilds.indexOf(g); if (i >= 0) guilds.splice(i, 1);
+        draw(); list.prepend(banner("ok", `Spectre left ${g.name}.` + (r.blocked ? " It's blocked from being added again." : "") + (notify.checked ? (r.notified ? " The server owner was messaged." : " The owner couldn't be messaged (DMs closed).") : "")));
+      } catch (e) { msg.append(banner("err", e.message)); ready(); }
+    });
+    slot.append(h("div", { class: "card", style: "margin-top:4px" },
+      h("p", { style: "margin-top:0" }, h("b", null, "Remove Spectre from " + g.name + "?"), " This makes the bot leave right away. Its saved data there is deleted after 30 days like any other leave."),
+      h("label", { class: "field" }, h("span", null, "Reason (required)"), reason),
+      h("label", { class: "chk" }, notify, h("span", null, "Message the server owner with the reason")),
+      h("label", { class: "chk" }, block, h("span", null, "Block this server so Spectre leaves again if someone re-adds it")),
+      h("label", { class: "field" }, h("span", null, "Type the server ID to confirm: " + g.id), confirm), msg, go));
+    reason.focus();
+  }
+  q.addEventListener("input", draw);
+  add(box, h("p", { class: "muted" }, `${num(guilds.length)} servers. Open any one to see its analytics and settings, or remove the bot from it.`), h("div", { style: "margin:0 0 16px" }, q), list);
+  draw();
+}
+
+async function devHistory(box) {
+  const d = await api("/api/dev/history");
+  const names = {}; 
+  add(box, h("h2", null, "Blocked servers"),
+    d.blocked.length ? d.blocked.map((b) => {
+      const row = h("div", { class: "drow" },
+        h("div", null, h("div", { class: "nm" }, "Server " + b.id), h("div", { class: "meta" }, `${b.reason || "No reason saved"} · blocked ${when(b.at)} by ${b.by}`)),
+        h("button", { onclick: async () => { row.querySelector("button").disabled = true; try { await api("/api/dev/unblock", { method: "POST", body: JSON.stringify({ guild_id: b.id }) }); row.remove(); } catch (e) { row.append(banner("err", e.message)); } } }, "Unblock"));
+      return row; }) : h("p", { class: "muted" }, "Nothing is blocked."),
+    h("h2", { style: "margin-top:28px" }, "What's been done"),
+    d.actions.length ? d.actions.map((a) => h("div", { class: "drow" },
+      h("div", null,
+        h("div", { class: "nm" }, (a.action === "removed_bot" ? "Removed from " : a.action === "unblocked" ? "Unblocked " : a.action + " ") + (a.guild_name || a.guild_id)),
+        h("div", { class: "meta" }, `${when(a.at)} · by ${a.by_name || a.by}` + (a.reason ? ` · "${a.reason}"` : "") + (a.blocked ? " · blocked" : "") + (a.notified ? " · owner messaged" : ""))))) : h("p", { class: "muted" }, "No actions yet."));
+}
+
 async function route() {
   window.onbeforeunload = null;
   if (!me) return;
   const m = location.hash.match(/^#\/g\/(\d+)(?:\/(\w+))?/);
   if (m) return openGuild(m[1], m[2]);
-  try { const j = await api("/api/me"); viewServers(j.guilds); } catch (e) { handleErr(e); }
+  try {
+    const j = await api("/api/me"); isOwner = !!j.is_owner; devUnlocked = !!j.dev_unlocked; showMe();
+    if (location.hash === "#/dev") return viewDev();
+    viewServers(j.guilds);
+  } catch (e) { handleErr(e); }
 }
 function handleErr(e) {
   if (e.status === 401) viewLogin(); else viewOffline(e.message);
@@ -373,8 +495,8 @@ function handleErr(e) {
 async function start() {
   const q = new URLSearchParams(location.search), err = q.get("error");
   if (err) history.replaceState(null, "", location.pathname + location.hash);
-  try { const j = await api("/api/me"); me = j.user; showMe();
-    if (location.hash.startsWith("#/g/")) await route(); else viewServers(j.guilds);
+  try { const j = await api("/api/me"); me = j.user; isOwner = !!j.is_owner; devUnlocked = !!j.dev_unlocked; showMe(); if (devUnlocked) showDevTimer();
+    if (location.hash.startsWith("#/g/") || location.hash === "#/dev") await route(); else viewServers(j.guilds);
   } catch (e) { if (e.status === 401) viewLogin(err ? banner("err", LOGIN_ERRORS[err] || "Login failed.") : null); else viewOffline(e.message); }
 }
 addEventListener("hashchange", route);
