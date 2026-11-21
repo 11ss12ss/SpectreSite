@@ -43,6 +43,8 @@ header { display: flex; justify-content: space-between; align-items: center; gap
 .brand img { width: 32px; height: 32px; mix-blend-mode: screen; }
 nav { display: flex; gap: 18px; font-size: .95rem; flex-wrap: wrap; }
 nav a { color: var(--muted); text-decoration: none; }
+nav a.navdash { color: var(--ink); border: 1px solid rgba(255,255,255,.35); padding: 6px 14px; border-radius: 99px; }
+nav a.navdash:hover { border-color: var(--accent); text-decoration: none; }
 nav a:hover { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 5px; }
 
 .hero { padding: 56px 0 24px; }
@@ -95,7 +97,7 @@ footer { margin-top: 80px; padding-top: 24px; border-top: 1px dashed var(--line)
 <div class="page">
   <header>
     <a class="brand" href="#top"><img id="bi" alt="" width="32" height="32">Spectre</a>
-    <nav aria-label="Main"><a href="#what">What it does</a><a href="#commands">Commands</a><a href="#setup">Setup</a><a href="#stores">Privacy</a><a href="https://discord.gg/2TRn6c24au" target="_blank" rel="noopener">Discord</a></nav>
+    <nav aria-label="Main"><a href="#what">What it does</a><a href="#commands">Commands</a><a href="#setup">Setup</a><a href="#stores">Privacy</a><a class="navdash" href="dashboard.html">Dashboard</a><a href="https://discord.gg/2TRn6c24au" target="_blank" rel="noopener">Discord</a></nav>
   </header>
 
   <main id="top">
@@ -104,7 +106,7 @@ footer { margin-top: 80px; padding-top: 24px; border-top: 1px dashed var(--line)
       <div class="tag">Anti-raid protection</div>
       <h1>Raids end <em>here.</em></h1>
       <p>Spectre is a free Discord bot that spots a flood of new accounts, locks your server down and pings your mods, before anyone panics. It also covers anti-nuke, moderation, tickets and verification.</p>
-      <div class="go"><a class="btn" id="invite" href="https://discord.gg/2TRn6c24au" target="_blank" rel="noopener">Join the Discord</a><a href="#commands">See the commands</a></div>
+      <div class="go"><a class="btn" id="invite" href="https://discord.gg/2TRn6c24au" target="_blank" rel="noopener">Join the Discord</a><a href="dashboard.html">Open the dashboard</a><a href="#commands">See the commands</a></div>
     </div>
 
     <section id="what">
@@ -146,7 +148,7 @@ footer { margin-top: 80px; padding-top: 24px; border-top: 1px dashed var(--line)
 
     <section id="stores">
       <h2>What it keeps</h2>
-      <p><b>Stored:</b> your server's settings; cases (warns, mutes, kicks, bans, notes) with user ID, moderator ID, reason, time and appeal text; ticket status; verification join time while someone is unverified; and temp-ban timers.</p>
+      <p><b>Stored:</b> your server's settings; cases (warns, mutes, kicks, bans, notes) with user ID, moderator ID, reason, time and appeal text; ticket status; verification join time while someone is unverified; temp-ban timers; and daily totals per server of joins, leaves and messages (counts only, never the messages) for the dashboard's analytics.</p>
       <p><b>Not stored:</b> message content, files, voice, or DMs. Edit and delete logs go to your own log channel.</p>
       <p><b>Deleting it:</b> <code>/data info</code> shows what's kept, <code>/data delete_user</code> erases one person's records, and <code>/data delete_server</code> erases everything for your server. If Spectre leaves a server, its data is erased after 30 days.</p>
     </section>
@@ -160,7 +162,7 @@ footer { margin-top: 80px; padding-top: 24px; border-top: 1px dashed var(--line)
     </section>
   </main>
 
-  <footer>Spectre · <a href="https://discord.gg/2TRn6c24au" target="_blank" rel="noopener">Join the Discord</a> · Not affiliated with Discord Inc.</footer>
+  <footer>Spectre · <a href="dashboard.html">Dashboard</a> · <a href="https://discord.gg/2TRn6c24au" target="_blank" rel="noopener">Join the Discord</a> · Not affiliated with Discord Inc.</footer>
 </div>
 
 <script>
