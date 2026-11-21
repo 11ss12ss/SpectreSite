@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spectre | Free Discord anti-raid and moderation bot</title>
+<meta name="description" content="Spectre is a free Discord bot with anti-raid and anti-nuke protection, moderation, tickets, verification and more. No paywall.">
+<meta name="theme-color" content="#09070F">
+<meta property="og:title" content="Spectre | Free Discord anti-raid and moderation bot">
+<meta property="og:description" content="Raids end here. Anti-raid, anti-nuke, moderation, tickets and verification. Free for every server.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* A quiet page, set like a note: one column, plain words, no cards. */
+:root {
+  --bg: #07060E; --ink: #EEE9F8; --muted: #ADA7C6; --faint: #68668A; --accent: #FF5CD1; --cyan: #5FE3F0; --blue: #4B5BFF; --rose: #FF9FB0;
+  --line: rgba(190,175,255,.18); --soft: rgba(190,175,255,.08); color-scheme: dark;
+  --display: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif; --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #07060E; --ink: #EEE9F8; --muted: #ADA7C6; --faint: #68668A; --accent: #FF5CD1; --cyan: #5FE3F0; --blue: #4B5BFF; --rose: #FF9FB0; --line: rgba(190,175,255,.18); --soft: rgba(190,175,255,.08); color-scheme: dark; } }
+:root[data-theme="dark"] { --bg: #07060E; --ink: #EEE9F8; --muted: #ADA7C6; --faint: #68668A; --accent: #FF5CD1; --cyan: #5FE3F0; --blue: #4B5BFF; --rose: #FF9FB0; --line: rgba(190,175,255,.18); --soft: rgba(190,175,255,.08); color-scheme: dark; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg) radial-gradient(90% 60% at 50% 0%, #1B1233 0%, #09070F 60%, #040309 100%) fixed; color: var(--ink); font: 400 18px/1.75 var(--body);
+  padding: 0 max(20px, env(safe-area-inset-right, 0px)) 80px max(20px, env(safe-area-inset-left, 0px)); overflow-x: hidden; }
+a { color: var(--ink); text-decoration-color: var(--accent); text-underline-offset: 4px; text-decoration-thickness: 1.5px; }
+a:hover { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+code { font: 500 .85em var(--mono); color: var(--cyan); }
+#sky { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.glow { position: fixed; border-radius: 50%; filter: blur(130px); z-index: 0; pointer-events: none; opacity: .34; }
+.glow.g1 { width: 720px; height: 720px; left: -240px; top: -180px; background: #FF4FD0; }
+.glow.g2 { width: 660px; height: 660px; right: -260px; bottom: 80px; background: #4B5BFF; opacity: .3; }
+body::after { content: ""; position: fixed; inset: 0; z-index: 2; pointer-events: none; opacity: .06; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+
+.page { max-width: 640px; margin: 0 auto; position: relative; }
+header { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 28px 0 0; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 10px; font: 700 1.3rem/1 var(--display); text-decoration: none; }
+.brand img { width: 32px; height: 32px; mix-blend-mode: screen; }
+nav { display: flex; gap: 18px; font-size: .95rem; flex-wrap: wrap; }
+nav a { color: var(--muted); text-decoration: none; }
+nav a:hover { color: var(--ink); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 5px; }
+
+.hero { padding: 56px 0 24px; }
+.hero img { width: 210px; height: auto; display: block; mix-blend-mode: screen; margin: 0 0 28px -18px; -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent 100%); mask-image: radial-gradient(closest-side, #000 72%, transparent 100%); }
+h1 { font: 800 clamp(3rem, 10vw, 5.6rem)/1.02 var(--display); letter-spacing: -.04em; margin: 14px 0 0; text-wrap: balance; }
+h1 em { font-style: normal; background: linear-gradient(100deg, #FF5CD1, #7B6BFF 55%, #4FD3FF); -webkit-background-clip: text; background-clip: text; color: transparent; padding-right: .06em; }
+.tag { font: 600 .85rem/1 var(--body); letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.hero p { margin: 26px 0 0; color: var(--muted); font-size: 1.2rem; max-width: 30em; }
+.hero .go { margin-top: 36px; display: flex; gap: 22px; align-items: center; flex-wrap: wrap; }
+.btn { background: linear-gradient(100deg, #FF5CD1, #6B5BFF 60%, #3DB8FF); color: #fff; box-shadow: 0 10px 44px rgba(150,80,255,.5); font: 800 1.05rem/1 var(--body); padding: 18px 32px; border-radius: 99px; text-decoration: none; }
+.btn:hover { color: #fff; filter: brightness(1.12); }
+
+section { padding-top: 64px; }
+h2 { font: 800 1.9rem/1.15 var(--display); letter-spacing: -.025em; margin: 0 0 18px; }
+h2::after { content: ""; display: block; width: 44px; height: 3px; border-radius: 3px; background: linear-gradient(100deg, #FF5CD1, #4FD3FF); margin-top: 14px; }
+p { margin: 0 0 1em; }
+.muted { color: var(--muted); }
+.plain { padding: 0; margin: 0; list-style: none; }
+.plain li { padding: 10px 0 10px 30px; position: relative; color: var(--muted); }
+.plain li::before { content: ""; position: absolute; left: 0; top: 20px; width: 11px; height: 11px; border-radius: 50%; background: linear-gradient(135deg, #FF5CD1, #4FD3FF); }
+.plain b { color: var(--ink); font-weight: 700; }
+
+details { border-bottom: 1px dashed var(--line); }
+details:first-of-type { border-top: 1px dashed var(--line); }
+summary { cursor: pointer; padding: 14px 0; font: 700 1.05rem/1.3 var(--display); list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--accent); font-weight: 500; }
+details[open] summary::after { content: "–"; }
+summary small { font: 400 .85rem var(--body); color: var(--faint); margin-left: auto; margin-right: 8px; align-self: center; }
+details > p, details > div { color: var(--muted); padding-bottom: 14px; }
+.cl { display: grid; gap: 2px 18px; grid-template-columns: max-content 1fr; padding: 0 0 16px; margin: 0; }
+.cl dt { font: 500 .85rem/1.9 var(--mono); color: var(--cyan); }
+.cl dd { margin: 0; color: var(--muted); font-size: .95rem; line-height: 1.9; }
+.search { width: 100%; background: transparent; border: 0; border-bottom: 1.5px solid var(--line); color: var(--ink); font: 400 1rem var(--body); padding: 10px 0; margin-bottom: 10px; border-radius: 0; }
+.search:focus { outline: none; border-color: var(--accent); }
+.search::placeholder { color: var(--faint); }
+ol.steps { padding-left: 1.3em; margin: 0; }
+ol.steps li { padding: 6px 0 6px 6px; color: var(--muted); }
+ol.steps li::marker { color: var(--accent); font-weight: 700; }
+ol.steps b { color: var(--ink); }
+footer { margin-top: 80px; padding-top: 24px; border-top: 1px dashed var(--line); color: var(--faint); font-size: .9rem; }
+@media (max-width: 520px) { .glow.g1 { width: 420px; height: 420px; left: -180px; top: -120px; opacity: .3; } .glow.g2 { width: 400px; height: 400px; right: -200px; opacity: .25; } body { font-size: 17px; } .hero { padding-top: 44px; } .cl { grid-template-columns: 1fr; gap: 0; } .cl dd { padding-bottom: 8px; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="glow g1" aria-hidden="true"></div><div class="glow g2" aria-hidden="true"></div>
+
+<div class="page">
+  <header>
+    <a class="brand" href="#top"><img id="bi" alt="" width="32" height="32">Spectre</a>
+    <nav aria-label="Main"><a href="#what">What it does</a><a href="#commands">Commands</a><a href="#setup">Setup</a><a href="#stores">Privacy</a><a href="https://discord.gg/2TRn6c24au" target="_blank" rel="noopener">Discord</a></nav>
+  </header>
+
+  <main id="top">
+    <div class="hero">
+      <img src="data:image/webp;base64,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" alt="Spectre logo" width="720" height="482">
+      <div class="tag">Anti-raid protection</div>
+      <h1>Raids end <em>here.</em></h1>
+      <p>Spectre is a free Discord bot that spots a flood of new accounts, locks your server down and pings your mods, before anyone panics. It also covers anti-nuke, moderation, tickets and verification.</p>
+      <div class="go"><a class="btn" id="invite" href="https://discord.gg/2TRn6c24au" target="_blank" rel="noopener">Join the Discord</a><a href="#commands">See the commands</a></div>
+    </div>
+
+    <section id="what">
+      <h2>What it does</h2>
+      <ul class="plain">
+        <li><b>Stops raids and nukes.</b> If a pile of accounts join at once, Shield Mode turns on. Your moderators get pinged and the owner gets a DM. <code>/lockdown</code> locks every channel when you need it.</li>
+        <li><b>Moderates.</b> Warn, mute, kick, ban, tempban, purge, lock and slowmode, with notes and a case history. People are told by DM when action is taken.</li>
+        <li><b>Escalates warnings.</b> Set your own ladder, like three warnings for a mute and eight for a ban. Warnings expire.</li>
+        <li><b>Filters the junk.</b> Spam, caps, mass mentions, invites, links, profanity, and fake-Nitro style scam links, including edited messages.</li>
+        <li><b>Checks newcomers.</b> Button or code verification, several roles on success, and an unverified role that comes off when they pass.</li>
+        <li><b>Handles tickets and appeals.</b> Private tickets with transcripts, and banned or muted members can appeal from the DM.</li>
+        <li><b>Welcomes people.</b> A greeting you write, an automatic role, and button panels so members pick their own roles.</li>
+        <li><b>Keeps logs.</b> Cases, edits and deletions, joins, role and channel changes, in the channels you choose.</li>
+      </ul>
+      <p class="muted" style="margin-top:20px">Spectre can also speak in three styles, set with <code>/style</code>: <code>embed</code> for boxed cards, <code>inline</code> for light formatted text, and <code>text</code> for plain text. It applies to replies, logs, alerts and DMs.</p>
+    </section>
+
+    <section id="commands">
+      <h2>Commands</h2>
+      <p class="muted">Everything is a slash command. <code>/help</code> in your server shows them too.</p>
+      <input id="q" class="search" type="search" placeholder="Search, for example ban" aria-label="Search commands">
+      <div id="cmds"></div>
+    </section>
+
+    <section id="setup">
+      <h2>Setting it up</h2>
+      <ol class="steps">
+        <li><b>Add Spectre</b> to your server (join the <a href="https://discord.gg/2TRn6c24au" target="_blank" rel="noopener">Discord</a> for the invite and help) and keep its role above the roles it should manage.</li>
+        <li><b>Run <code>/config setup</code></b> to pick a log channel and your moderator role.</li>
+        <li><b>Run <code>/verify setup</code></b> if you want newcomers gated until they pass.</li>
+        <li><b>Run <code>/shield status</code></b> to see the raid settings and set where alerts go.</li>
+      </ol>
+    </section>
+
+    <section id="cost">
+      <h2>Cost</h2>
+      <p>Nothing. There are no tiers or locked features. If it's saved you some trouble and you'd like to help with hosting, there's a <a href="https://cash.app/$SkylerBills3" target="_blank" rel="noopener">tip link</a>. It's optional and unlocks nothing.</p>
+    </section>
+
+    <section id="stores">
+      <h2>What it keeps</h2>
+      <p><b>Stored:</b> your server's settings; cases (warns, mutes, kicks, bans, notes) with user ID, moderator ID, reason, time and appeal text; ticket status; verification join time while someone is unverified; and temp-ban timers.</p>
+      <p><b>Not stored:</b> message content, files, voice, or DMs. Edit and delete logs go to your own log channel.</p>
+      <p><b>Deleting it:</b> <code>/data info</code> shows what's kept, <code>/data delete_user</code> erases one person's records, and <code>/data delete_server</code> erases everything for your server. If Spectre leaves a server, its data is erased after 30 days.</p>
+    </section>
+
+    <section id="faq">
+      <h2>Questions</h2>
+      <details><summary>What permissions does it need?</summary><p>View channels, send messages, embed links, attach files, read message history, manage messages, channels and roles, manage server, kick, ban and timeout members, and view the audit log.</p></details>
+      <details><summary>Why can't it give a role?</summary><p>Discord only lets a bot manage roles below its own. Drag Spectre's role above the ones it should hand out.</p></details>
+      <details><summary>Can I turn parts off?</summary><p><code>/modules</code> switches whole areas on or off, like tickets, verification or welcome messages. Your settings stay saved while a module is off.</p></details>
+      <details><summary>Will it ping everyone in a raid?</summary><p>No. Raid alerts ping only your moderator role, and the server owner gets a DM.</p></details>
+    </section>
+  </main>
+
+  <footer>Spectre · <a href="https://discord.gg/2TRn6c24au" target="_blank" rel="noopener">Join the Discord</a> · Not affiliated with Discord Inc.</footer>
+</div>
+
+<script>
+document.getElementById("bi").src = document.querySelector(".hero img").src;
+const INVITE_URL = "";  /* bot invite link: when set, the main button becomes "Add to Discord" */
+(function () {
+  var inv = document.getElementById("invite");
+  if (INVITE_URL) { inv.href = INVITE_URL; inv.textContent = "Add to Discord"; }
+
+  /* ---- starfield: calm drift toward the viewer ---- */
+  (function () {
+    var cv = document.getElementById("sky"), ctx = cv.getContext("2d");
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var W, H, D, stars = [], shoot = null, nextShoot = 6000, last = 0, run = true;
+    var tints = ["255,255,255", "205,210,255", "255,190,236", "170,236,250"];
+    function mk(near) { return { x: (Math.random() - .5) * 2, y: (Math.random() - .5) * 2, z: near ? Math.random() : 1, t: tints[(Math.random() * tints.length) | 0], p: Math.random() * 6.28 }; }
+    function size() {
+      D = Math.min(window.devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+      cv.width = W * D; cv.height = H * D; ctx.setTransform(D, 0, 0, D, 0, 0);
+      var n = W < 600 ? 90 : 170; stars = []; for (var i = 0; i < n; i++) stars.push(mk(true));
+    }
+    function frame(now) {
+      if (!run) return;
+      var dt = Math.min((now - last) / 1000 || 0, .05); last = now;
+      ctx.clearRect(0, 0, W, H);
+      var cx = W / 2, cy = H * .42, f = Math.max(W, H) * .55;
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        if (!reduce) s.z -= dt * .035;
+        if (s.z <= .02) { stars[i] = s = mk(false); }
+        var k = 1 / s.z, x = cx + s.x * f * k * .35, y = cy + s.y * f * k * .35;
+        if (x < -20 || x > W + 20 || y < -20 || y > H + 20) { stars[i] = mk(false); continue; }
+        var depth = 1 - s.z, r = .4 + depth * 1.6;
+        var a = (.25 + depth * .75) * (reduce ? 1 : .8 + .2 * Math.sin(now / 900 + s.p));
+        if (!reduce && depth > 5) {
+          var k2 = 1 / (s.z + .008), x2 = cx + s.x * f * k2 * .35, y2 = cy + s.y * f * k2 * .35;
+          ctx.strokeStyle = "rgba(" + s.t + "," + (a * .5) + ")"; ctx.lineWidth = r; ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x, y); ctx.stroke();
+        }
+        ctx.fillStyle = "rgba(" + s.t + "," + a + ")"; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill();
+      }
+      if (!reduce) {
+        nextShoot -= dt * 1000;
+        if (nextShoot < 0 && !shoot) { shoot = { x: Math.random() * W * .7, y: Math.random() * H * .35, l: 0 }; nextShoot = 9000 + Math.random() * 9000; }
+        if (shoot) {
+          shoot.l += dt * 1.1; var p = shoot.l, hx = shoot.x + p * 520, hy = shoot.y + p * 220;
+          var g = ctx.createLinearGradient(hx - 120, hy - 50, hx, hy); g.addColorStop(0, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(255,230,250," + Math.max(0, 1 - p) + ")");
+          ctx.strokeStyle = g; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(hx - 120, hy - 50); ctx.lineTo(hx, hy); ctx.stroke();
+          if (p > 1) shoot = null;
+        }
+        requestAnimationFrame(frame);
+      }
+    }
+    size(); addEventListener("resize", size);
+    if (reduce) frame(0); else requestAnimationFrame(frame);
+    document.addEventListener("visibilitychange", function () { if (!reduce) { run = !document.hidden; if (run) { last = performance.now(); requestAnimationFrame(frame); } } });
+  })();
+
+
+  var C = [
+    ["Moderation", "/warn", "Warn a member and record a case."], ["Moderation", "/warnings", "List a member's warnings."],
+    ["Moderation", "/unwarn", "Remove one warning."], ["Moderation", "/clearwarns", "Clear all of a member's warnings."],
+    ["Moderation", "/mute", "Time a member out for a set duration."], ["Moderation", "/unmute", "End a timeout early."],
+    ["Moderation", "/kick", "Remove a member, with a reason."], ["Moderation", "/ban", "Ban a member and optionally clear recent messages."],
+    ["Moderation", "/tempban", "Ban for a set time, then unban automatically."], ["Moderation", "/unban", "Lift a ban, with search as you type."],
+    ["Moderation", "/purge", "Delete many messages, with a live progress bar."], ["Moderation", "/lock", "Stop members posting in a channel."],
+    ["Moderation", "/unlock", "Let members post again."], ["Moderation", "/slowmode", "Set a channel's slowmode."],
+    ["Moderation", "/note", "Add a private staff note to a member."], ["Moderation", "/case", "Look up a case by number."],
+    ["Moderation", "/history", "Full moderation history for a member."], ["Moderation", "/userinfo", "Account age, roles and past cases."],
+    ["Moderation", "/dm_user", "Send a member a logged message from the staff team."],
+    ["Anti-raid", "/shield status", "See Shield Mode and the raid settings."], ["Anti-raid", "/shield on", "Turn Shield Mode on by hand."],
+    ["Anti-raid", "/shield off", "End Shield Mode."], ["Anti-raid", "/shield whitelist", "Trust an admin or bot so anti-nuke ignores them."],
+    ["Anti-raid", "/lockdown", "Lock every channel at once, with a progress bar."], ["Anti-raid", "/unlockdown", "Restore every channel as it was."],
+    ["Auto-mod", "/filter add", "Add words to the filter."], ["Auto-mod", "/filter remove", "Remove words from the filter."], ["Auto-mod", "/filter list", "Show your custom filter words."], ["Auto-mod", "/automod exempt_channel", "Exempt a channel from auto-moderation."], ["Auto-mod", "/automod exempt_role", "Exempt a role from auto-moderation."], ["Auto-mod", "/automod allowlink", "Allow a domain, such as youtube.com."],
+    ["Warnings", "/escalation list", "Show your warning ladder."], ["Warnings", "/escalation add", "Add a step, such as 5 warnings for a kick."],
+    ["Warnings", "/escalation remove", "Remove a step."],
+    ["Tickets", "/ticket setup", "Post the ticket panel."], ["Tickets", "/ticket close", "Close a ticket and send the transcript."],
+    ["Tickets", "/ticket add", "Add someone to a ticket."], ["Tickets", "/ticket remove", "Remove someone from a ticket."],
+    ["Tickets", "/ticket type_add", "Add a ticket category."], ["Tickets", "/ticket type_remove", "Remove a ticket category."],
+    ["Verification", "/verify setup", "Post the verification panel."], ["Verification", "/verify role_add", "Give another role on verification."],
+    ["Verification", "/verify role_remove", "Stop giving a role."], ["Verification", "/verify unverified_role", "Set the role newcomers hold until they verify."],
+    ["Verification", "/verify roles", "Show the verification roles."], ["Verification", "/verify manual", "Verify a member by hand."],
+    ["Verification", "/verify disable", "Turn verification off."],
+    ["Welcome", "/welcome setup", "Turn on welcome messages in a channel."], ["Welcome", "/welcome message", "Change the welcome text."],
+    ["Welcome", "/welcome preview", "Preview the message."], ["Welcome", "/welcome autorole", "Give new members a role automatically."],
+    ["Welcome", "/welcome dm", "Also DM the welcome to new members."], ["Welcome", "/welcome off", "Turn welcome messages off."],
+    ["Welcome", "/rolepanel create", "Post a button panel where members pick roles."],
+    ["Setup", "/config setup", "Guided setup for logs and roles."], ["Setup", "/config view", "See every setting."],
+    ["Setup", "/config set", "Change an on/off, number, text or choice setting."], ["Setup", "/config channel", "Set a log or ticket channel."], ["Setup", "/config role", "Set the mod, verified or support role."], ["Setup", "/config reset", "Restore a setting to its default."], ["Setup", "/modules list", "See which modules are on."],
+    ["Setup", "/modules enable", "Turn a module on."], ["Setup", "/modules disable", "Turn a module off."],
+    ["Setup", "/style", "Choose embed, inline or plain text."], ["Setup", "/help", "Show what the bot can do."],
+    ["Setup", "/invite", "Get the link to add Spectre elsewhere."], ["Setup", "/donate", "Optional link to help with hosting."],
+    ["Data", "/data info", "See what Spectre stores."], ["Data", "/data delete_user", "Erase one person's records."],
+    ["Data", "/data delete_server", "Erase all data for your server."]
+  ];
+
+  var cats = C.map(function (c) { return c[0]; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+  var box = document.getElementById("cmds"), q = document.getElementById("q");
+  function esc(s) { return s.replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+  function draw() {
+    var term = q.value.trim().toLowerCase(), out = "", any = false;
+    cats.forEach(function (cat) {
+      var rows = C.filter(function (c) { return c[0] === cat && (!term || (c[1] + " " + c[2]).toLowerCase().indexOf(term) > -1); });
+      if (!rows.length) return; any = true;
+      out += '<details' + (term ? ' open' : '') + '><summary>' + esc(cat) + '<small>' + rows.length + '</small></summary><dl class="cl">' +
+        rows.map(function (c) { return '<dt>' + esc(c[1]) + '</dt><dd>' + esc(c[2]) + '</dd>'; }).join("") + '</dl></details>';
+    });
+    box.innerHTML = any ? out : '<p class="muted">No command matches that.</p>';
+  }
+  q.addEventListener("input", draw); draw();
+})();
+</script>
+</body>
+</html>
