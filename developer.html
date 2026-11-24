@@ -105,6 +105,453 @@ button.busy::after { content:""; position:absolute; inset:0; margin:auto; width:
 .tools .card b { display:block; margin-bottom:2px; } .tools .card > span { color:var(--muted); font-size:.88rem; display:block; margin-bottom:12px; }
 .tools .card button { min-height:40px; padding:9px 16px; font-size:.88rem; }
 .stamp { color:var(--faint); font-size:.85rem; }
+.thread { display:grid; gap:10px; margin:10px 0 14px; }
+.msg { max-width:92%; padding:10px 13px; border-radius:14px; border:1px solid var(--line); background:var(--soft); white-space:pre-wrap; overflow-wrap:anywhere; font-size:.95rem; }
+.msg.staff { justify-self:end; border-color:rgba(255,92,209,.4); background:rgba(255,92,209,.08); }
+.msg.user { justify-self:start; border-color:rgba(95,227,240,.45); background:rgba(95,227,240,.07); }
+.msg small { display:block; color:var(--faint); font-size:.75rem; margin-bottom:3px; }
+.reply { width:100%; min-height:84px; resize:vertical; font:400 .95rem/1.5 var(--font); color:var(--ink); background:rgba(8,6,18,.7); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin:0 0 10px; }
+.item h3 { margin:2px 0 4px; font:700 1.05rem/1.3 var(--font); overflow-wrap:anywhere; }
+.pill.answered { color:var(--cyan); border-color:rgba(95,227,240,.5); }
+.pill.closed { color:var(--ok); border-color:rgba(110,231,168,.5); }
+.pill.tkopen { color:var(--warn); border-color:rgba(255,200,87,.5); }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior:auto !important; } .sk, .rise { animation:none !important; } }
+</style>
+</head>
+<body>
+<div class="glow g1" aria-hidden="true"></div><div class="glow g2" aria-hidden="true"></div>
+<div class="wrap">
+  <header>
+    <a class="brand" href="index.html"><img src="data:image/webp;base64,UklGRgACAABXRUJQVlA4IPQBAADQCwCdASpAAEAAPrVQoUwnJKMiLBVaaOAWiWoAzxvjKT/AYrnAj24HmA3JnJa1/e5JX2rszLsGOpIHF6QxpJtdHXmEFXJJlDPVi3wt+YESGVp0I2+i0IHKp4bS26sT1lrbVfe2w2lAAP78URfdJqHsDpmn9cTv4xFXtuFpzsc5beA9297WPfi+tYckcCPGUyvJMi8oV4IuRwf3c1WlCIgOyPSuUsyovoenYxw17p6ziUeQaI+SN4UHmC/YQI6/8IUYlgQGvGuVRH0M33DTVd/irzGVGVWtAMYu95ez2UBdIc84pYWingaYCP6hsTtA5kmSGJ9vCZefCzf3jwi/tSXXZri/FysNzgsrldK4wR/xUQQOnXyaYVDsYyENi9knXZ3/ds9PTVzk0vn6sNxVO1uiE9QzU1SQdh1a5cNLU5KB1LlH/tVePMru8l7Kx7DhPWDoVF1IWBiRyPaZN7k2NpN32RCn/AgeKTjFojzQBoYndG4kUG4lK6mWkOa59Refz3/Th70VVHfK8+9nERuEkeDYF+DZSqEMu1DyFGiu0IVPc2FvXPyT015DXzlXuyDgqGjCEMeT1+qFN/+TgwRgbA/cFb7qiW5M5WmD6yRFz8+2x3Hd3Ht449z5HGx0Rw827ozaW12mpyH/mMt1ShKpfgAuzUAAAA==" alt="">Spectre<small>Developers</small></a>
+    <div class="me" id="me" hidden></div>
+  </header>
+  <main id="app" aria-live="polite"><div class="boot"><span class="spin" aria-hidden="true"></span><span>Checking your login...</span></div></main>
+</div>
+<script>
+const API = "https://api.spectrebot.org";
+const app = document.getElementById("app"), meBox = document.getElementById("me");
+let me = null, tab = "overview", statusTimer = null, filt = { kind: "all", state: "open" }, deleteArm = null;
+
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) if (kid != null && kid !== false) el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+  return el;
+}
+function setApp(...kids) { app.replaceChildren(...kids.flat().filter(Boolean)); }
+function banner(kind, text) { return h("div", { class: "banner " + kind, role: kind === "err" ? "alert" : null }, text); }
+async function api(path, opt = {}) {
+  let r;
+  try { r = await fetch(API + path, { credentials: "include", ...opt, headers: opt.body ? { "Content-Type": "application/json" } : {} }); }
+  catch (e) { const err = new Error("Couldn't reach the Spectre bot right now."); err.status = 0; throw err; }
+  let j = {}; try { j = await r.json(); } catch (e) {}
+  if (!r.ok) { const err = new Error(j.error || "Something went wrong."); err.status = r.status; throw err; }
+  return j;
+}
+function ago(ts) {
+  const s = Math.max(0, Date.now() / 1000 - ts);
+  if (s < 90) return "just now"; if (s < 3600) return Math.round(s / 60) + " min ago"; if (s < 86400) return Math.round(s / 3600) + " h ago";
+  return Math.round(s / 86400) + " d ago";
+}
+function dur(s) { const d = Math.floor(s / 86400), hh = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d ? d + "d " + hh + "h" : hh ? hh + "h " + m + "m" : m + "m"; }
+function num(n) { return n == null ? "-" : Number(n).toLocaleString(); }
+
+async function busy(btn, fn) {
+  if (btn.classList.contains("busy")) return;
+  btn.classList.add("busy"); btn.disabled = true;
+  try { return await fn(); } finally { btn.classList.remove("busy"); btn.disabled = false; }
+}
+function copyText(text, btn, label) {
+  const done = () => { const old = btn.textContent; btn.textContent = "Copied"; setTimeout(() => { btn.textContent = label || old; }, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => fallback());
+  else fallback();
+  function fallback() {
+    const t = h("textarea", { style: "position:fixed;left:-9999px" }); t.value = text; document.body.append(t); t.select();
+    try { document.execCommand("copy"); done(); } catch (e) { btn.textContent = "Press Ctrl+C"; } t.remove();
+  }
+}
+function csvDownload(name, rows) {
+  const cell = (v) => { let t = v == null ? "" : String(v); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
+  const blob = new Blob(["﻿" + rows.map((r) => r.map(cell).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = h("a", { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const iso = (ts) => ts ? new Date(ts * 1000).toISOString() : "";
+const sk = (w, hgt) => h("span", { class: "sk", style: "width:" + w + ";height:" + hgt + "px" });
+const skStats = () => h("div", { class: "stats", "aria-busy": "true", "aria-label": "Loading" }, [0, 1, 2, 3, 4, 5].map(() => h("div", { class: "card stat sk-card" }, sk("55%", 30), sk("75%", 14))));
+const skItems = (n) => h("div", { class: "list", "aria-busy": "true", "aria-label": "Loading" }, Array.from({ length: n }, () => h("div", { class: "card sk-card" }, sk("90px", 18), sk("85%", 16), sk("60%", 16), sk("160px", 36))));
+const skRows = (n) => h("div", { class: "list", "aria-busy": "true", "aria-label": "Loading" }, Array.from({ length: n }, () => h("div", { class: "card sv" }, h("span", { class: "sk", style: "width:44px;height:44px;border-radius:13px" }), h("div", { class: "info sk-card" }, sk("40%", 16), sk("65%", 13)))));
+
+function showMe() {
+  meBox.replaceChildren();
+  if (!me) { meBox.hidden = true; return; }
+  meBox.hidden = false;
+  const av = me.avatar && /^https:\/\/cdn\.discordapp\.com\//.test(me.avatar) ? me.avatar : null;
+  meBox.append(av ? h("img", { src: av, alt: "" }) : "", h("span", null, me.name), h("button", { onclick: logout }, "Log out"));
+}
+async function logout() { try { await api("/api/logout", { method: "POST", body: "{}" }); } catch (e) {} me = null; clearInterval(statusTimer); showMe(); viewLogin(); }
+
+function viewLogin(msg) {
+  setApp(msg, h("section", { class: "hero rise" }, h("h1", null, "For Spectre's developers."),
+    h("p", null, "A private console for the people who run Spectre: bot status, the feedback and raid-report inbox, support tickets, every server it's in, and quick links."),
+    h("p", null, h("a", { class: "btn primary", href: API + "/auth/login?next=developer" }, "Log in with Discord"))));
+}
+function viewNotOwner() {
+  setApp(h("section", { class: "hero rise" }, h("h1", null, "This page is for Spectre's developers."),
+    h("p", null, "Your Discord account isn't on the developer list. If you manage a server with Spectre, the dashboard is where you want to be."),
+    h("p", null, h("a", { class: "btn primary", href: "dashboard.html" }, "Open the dashboard"))));
+}
+function viewUnlock(msg) {
+  const input = h("input", { type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "Your Discord user ID", "aria-label": "Your Discord user ID" });
+  const go = h("button", { class: "primary", type: "submit" }, "Unlock");
+  const form = h("form", { class: "unlock", onsubmit: (e) => {
+    e.preventDefault();
+    busy(go, async () => {
+      try { await api("/api/dev/unlock", { method: "POST", body: JSON.stringify({ owner_id: input.value.trim() }) }); viewConsole(); }
+      catch (ex) { viewUnlock(banner("err", ex.status === 401 ? "Your session ended. Log in again." : ex.message)); }
+    });
+  } }, input, go);
+  setApp(msg, h("section", { class: "hero rise" }, h("h1", null, "Developer Mode"),
+    h("p", null, "Type your own Discord user ID to unlock the console. It locks again after 15 minutes."), form));
+  input.focus();
+}
+
+const TABS = [["overview", "Overview"], ["feedback", "Feedback"], ["tickets", "Tickets"], ["servers", "Servers"], ["activity", "Activity"], ["tools", "Tools"]];
+let openCount = null, ticketCount = null;
+function badge() {
+  for (const [i, n, what] of [[1, openCount, " open"], [2, ticketCount, " to answer"]]) {
+    const b = document.querySelectorAll(".tabs button")[i]; if (!b) continue;
+    b.querySelector(".badge")?.remove(); if (n) b.append(h("span", { class: "badge", "aria-label": n + what }, n));
+  }
+}
+function viewConsole() {
+  clearInterval(statusTimer);
+  const nav = h("div", { class: "tabs", role: "tablist" }, TABS.map(([id, label]) =>
+    h("button", { role: "tab", "aria-selected": String(tab === id), onclick: () => { tab = id; deleteArm = null; viewConsole(); } }, label)));
+  const body = h("div", { id: "body" });
+  setApp(nav, body); badge();
+  ({ overview: tabOverview, feedback: tabFeedback, tickets: tabTickets, servers: tabServers, activity: tabActivity, tools: tabTools })[tab](body);
+}
+function locked(ex, body) {
+  if (ex.status === 403) { viewUnlock(banner("err", "Developer Mode is locked. Unlock it again.")); return true; }
+  if (ex.status === 401) { me = null; showMe(); viewLogin(banner("err", "Your session ended. Log in again.")); return true; }
+  body.replaceChildren(banner("err", ex.message), h("p", null, h("button", { onclick: viewConsole }, "Try again"))); return false;
+}
+
+async function tabOverview(body) {
+  body.replaceChildren(skStats());
+  let first = true;
+  async function load(btn) {
+    try {
+      const s = await api("/api/dev/status"); openCount = s.feedback_open; ticketCount = s.tickets_open; badge();
+      const card = (v, l) => h("div", { class: "card stat" + (first ? " rise" : "") }, h("b", null, v), h("span", null, l));
+      const refresh = h("button", { onclick: (e) => busy(e.currentTarget, () => load()) }, "Refresh now");
+      body.replaceChildren(
+        h("div", { class: "stats" }, card(num(s.servers), "Servers"), card(num(s.members), "Members reached"),
+          card(s.latency_ms == null ? "-" : s.latency_ms + " ms", "Discord latency"), card(dur(s.uptime_s), "Uptime"),
+          card(num(s.feedback_open), "Open reports"), card(num(s.tickets_open), "Tickets to answer"), card(num(s.blocked), "Blocked servers")),
+        h("div", { class: "row", style: "margin-top:16px" }, refresh, h("span", { class: "stamp" }, "Updated " + new Date().toLocaleTimeString() + " · refreshes every 30 seconds")),
+        h("p", { class: "meta" }, "Python " + s.python + " · discord.py " + s.discord_py + " · " + s.cogs + " modules loaded"));
+      first = false;
+    } catch (ex) { clearInterval(statusTimer); locked(ex, body); }
+  }
+  await load(); statusTimer = setInterval(load, 30000);
+}
+
+async function tabFeedback(body) {
+  const kinds = [["all", "All"], ["suggestion", "Suggestions"], ["bug", "Bugs"], ["raid", "Raids"]];
+  const states = [["open", "Open"], ["done", "Done"], ["all", "Everything"]];
+  body.replaceChildren(skItems(3));
+  let items;
+  try { items = (await api("/api/dev/feedback")).items; } catch (ex) { locked(ex, body); return; }
+  openCount = items.filter((f) => f.status !== "done").length; badge();
+  const list = h("div", { class: "list" });
+  let query = "";
+  const search = h("input", { type: "search", placeholder: "Search reports", "aria-label": "Search reports", oninput: (e) => { query = e.target.value.trim().toLowerCase(); draw(); } });
+  const bar = h("div", { class: "row" });
+  const chips = (set, cur, key) => set.map(([id, label]) => h("button", { class: "chip", "aria-pressed": String(cur === id), onclick: () => { filt[key] = id; deleteArm = null; draw(); chipsRow(); } }, label));
+  function chipsRow() { bar.replaceChildren(...chips(kinds, filt.kind, "kind"), h("span", { class: "muted" }, "·"), ...chips(states, filt.state, "state")); }
+  const visible = () => items.filter((f) => (filt.kind === "all" || f.kind === filt.kind) && (filt.state === "all" || f.status === filt.state)
+    && (!query || (f.message + " " + f.where + " " + f.contact).toLowerCase().includes(query)));
+  const exportBtn = h("button", { onclick: () => csvDownload("spectre-feedback.csv", [["id", "type", "status", "created_utc", "server_or_where", "contact", "message"],
+    ...visible().map((f) => [f.id, f.kind, f.status, iso(f.at), f.where, f.contact, f.message])]) }, "Export CSV");
+  function draw() {
+    const shown = visible();
+    list.replaceChildren(...(shown.length ? shown.map(card) : [h("div", { class: "empty card" }, items.length ? "Nothing matches these filters." : "No reports yet. They show up here when someone uses the feedback form on the website.")]));
+  }
+  function card(f) {
+    const label = { bug: "Bug report", raid: "Raid report", suggestion: "Suggestion" }[f.kind] || f.kind;
+    const arm = deleteArm === f.id;
+    return h("article", { class: "card item rise" },
+      h("div", { class: "top" }, h("span", { class: "pill " + f.kind }, label), f.status === "done" ? h("span", { class: "pill done" }, "Done") : null,
+        h("span", { class: "when", title: new Date(f.at * 1000).toLocaleString() }, ago(f.at))),
+      h("p", null, f.message),
+      (f.where || f.contact) ? h("dl", null, f.where ? h("div", null, h("dt", null, f.kind === "raid" ? "Server" : "Where"), h("dd", null, f.where)) : null,
+        f.contact ? h("div", null, h("dt", null, "Contact"), h("dd", null, f.contact)) : null) : null,
+      h("div", { class: "acts" },
+        h("button", { onclick: (e) => busy(e.currentTarget, () => act(async () => { const st = f.status === "done" ? "open" : "done"; await api("/api/dev/feedback/" + encodeURIComponent(f.id) + "/status", { method: "POST", body: JSON.stringify({ status: st }) }); f.status = st; openCount = items.filter((x) => x.status !== "done").length; badge(); draw(); })) }, f.status === "done" ? "Reopen" : "Mark done"),
+        h("button", { onclick: (e) => copyText(f.message, e.currentTarget, "Copy text") }, "Copy text"),
+        h("button", { class: "danger", onclick: (e) => busy(e.currentTarget, () => act(async () => {
+          if (!arm) { deleteArm = f.id; draw(); return; }
+          await api("/api/dev/feedback/" + encodeURIComponent(f.id) + "/delete", { method: "POST", body: "{}" });
+          items = items.filter((x) => x.id !== f.id); deleteArm = null; openCount = items.filter((x) => x.status !== "done").length; badge(); draw();
+        })) }, arm ? "Click again to delete for good" : "Delete")));
+  }
+  async function act(fn) { try { await fn(); } catch (ex) { if (locked(ex, body)) return; list.prepend(banner("err", ex.message)); } }
+  chipsRow(); draw();
+  body.replaceChildren(h("div", { class: "toolbar" }, search, exportBtn), bar, list);
+}
+
+async function tabTickets(body) {
+  const states = [["open", "Needs reply"], ["answered", "Answered"], ["closed", "Closed"], ["all", "All"]];
+  const cats = { help: "Help", bug: "Bug", server: "Server", appeal: "Appeal", other: "Other" };
+  body.replaceChildren(skItems(3));
+  let items;
+  try { items = (await api("/api/dev/tickets")).items; } catch (ex) { locked(ex, body); return; }
+  const recount = () => { ticketCount = items.filter((t) => t.status === "open").length; badge(); };
+  recount();
+  let state = "open", query = "";
+  const drafts = {};
+  const list = h("div", { class: "list" });
+  const search = h("input", { type: "search", placeholder: "Search tickets", "aria-label": "Search tickets", oninput: (e) => { query = e.target.value.trim().toLowerCase(); draw(); } });
+  const bar = h("div", { class: "row" });
+  function barRow() { bar.replaceChildren(...states.map(([id, label]) => h("button", { class: "chip", "aria-pressed": String(state === id), onclick: () => { state = id; deleteArm = null; draw(); barRow(); } }, label))); }
+  const visible = () => items.filter((t) => (state === "all" || t.status === state)
+    && (!query || (t.ref + " " + t.subject + " " + t.contact + " " + t.messages.map((m) => m.text).join(" ")).toLowerCase().includes(query)));
+  const exportBtn = h("button", { onclick: () => csvDownload("spectre-tickets.csv", [["ref", "category", "status", "created_utc", "updated_utc", "contact", "subject", "messages"],
+    ...visible().map((t) => [t.ref, t.category, t.status, iso(t.at), iso(t.updated), t.contact, t.subject, t.messages.map((m) => m.from + ": " + m.text).join("\n---\n")])]) }, "Export CSV");
+  function draw() {
+    const shown = visible();
+    list.replaceChildren(...(shown.length ? shown.map(card) : [h("div", { class: "empty card" }, items.length ? "Nothing matches these filters." : "No tickets yet. They show up here when someone opens one on the support page.")]));
+  }
+  async function act(fn) { try { await fn(); } catch (ex) { if (locked(ex, body)) return; list.prepend(banner("err", ex.message)); } }
+  function card(t) {
+    const arm = deleteArm === "t" + t.ref;
+    const ta = h("textarea", { class: "reply", maxlength: "1500", placeholder: "Reply to the user…", "aria-label": "Reply to ticket " + t.ref, oninput: (e) => { drafts[t.ref] = e.target.value; } });
+    ta.value = drafts[t.ref] || "";
+    const setStatus = (st) => (e) => busy(e.currentTarget, () => act(async () => {
+      await api("/api/dev/tickets/" + encodeURIComponent(t.ref) + "/status", { method: "POST", body: JSON.stringify({ status: st }) }); t.status = st; recount(); draw();
+    }));
+    return h("article", { class: "card item rise" },
+      h("div", { class: "top" }, h("b", { class: "mono" }, "T-" + t.ref), h("span", { class: "pill " + (t.status === "open" ? "tkopen" : t.status) }, { open: "Needs reply", answered: "Answered", closed: "Closed" }[t.status] || t.status),
+        h("span", { class: "pill" }, cats[t.category] || "Other"), h("span", { class: "when", title: new Date(t.updated * 1000).toLocaleString() }, ago(t.updated))),
+      h("h3", null, t.subject),
+      t.contact ? h("dl", null, h("div", null, h("dt", null, "Contact"), h("dd", null, t.contact))) : null,
+      h("div", { class: "thread" }, t.messages.map((m) => h("div", { class: "msg " + m.from }, h("small", null, (m.from === "staff" ? "Spectre team" : "User") + " · " + new Date(m.at * 1000).toLocaleString()), m.text))),
+      ta,
+      h("div", { class: "acts" },
+        h("button", { class: "primary", onclick: (e) => busy(e.currentTarget, () => act(async () => {
+          const message = ta.value.trim(); if (!message) { ta.focus(); return; }
+          await api("/api/dev/tickets/" + encodeURIComponent(t.ref) + "/reply", { method: "POST", body: JSON.stringify({ message }) });
+          t.messages.push({ from: "staff", text: message, at: Math.floor(Date.now() / 1000) }); t.status = "answered"; t.updated = Math.floor(Date.now() / 1000); delete drafts[t.ref]; recount(); draw();
+        })) }, "Send reply"),
+        t.status === "closed" ? h("button", { onclick: setStatus("open") }, "Reopen") : h("button", { onclick: setStatus("closed") }, "Close ticket"),
+        h("button", { onclick: (e) => copyText("T-" + t.ref, e.currentTarget, "Copy ID") }, "Copy ID"),
+        h("button", { class: "danger", onclick: (e) => busy(e.currentTarget, () => act(async () => {
+          if (!arm) { deleteArm = "t" + t.ref; draw(); return; }
+          await api("/api/dev/tickets/" + encodeURIComponent(t.ref) + "/delete", { method: "POST", body: "{}" });
+          items = items.filter((x) => x.ref !== t.ref); deleteArm = null; recount(); draw();
+        })) }, arm ? "Click again to delete for good" : "Delete")));
+  }
+  barRow(); draw();
+  body.replaceChildren(h("div", { class: "toolbar" }, search, exportBtn), bar, list);
+}
+
+async function tabServers(body) {
+  body.replaceChildren(skRows(4));
+  let j; try { j = await api("/api/dev/guilds"); } catch (ex) { locked(ex, body); return; }
+  let q = "", sortBy = "name";
+  const list = h("div", { class: "list" }), count = h("span", { class: "muted" });
+  const sorters = { name: (a, b) => a.name.localeCompare(b.name), members: (a, b) => (b.members || 0) - (a.members || 0),
+    newest: (a, b) => (b.joined || 0) - (a.joined || 0), oldest: (a, b) => (a.joined || Infinity) - (b.joined || Infinity) };
+  const view = () => j.guilds.filter((g) => !q || (g.name + " " + g.id + " " + (g.owner_name || "")).toLowerCase().includes(q)).sort(sorters[sortBy]);
+  function draw() {
+    const rows = view(); count.textContent = rows.length + " of " + num(j.guilds.length) + " servers";
+    list.replaceChildren(...(rows.length ? rows.map((g) => h("div", { class: "card sv rise" },
+      g.icon ? h("img", { class: "ic", src: g.icon, alt: "" }) : h("div", { class: "ic", "aria-hidden": "true" }, (g.name || "?").slice(0, 1).toUpperCase()),
+      h("div", { class: "info" }, h("b", null, g.name), h("span", null, num(g.members) + " members · ID " + g.id + (g.owner_name ? " · owner " + g.owner_name : "") + (g.joined ? " · added " + ago(g.joined) : ""))),
+      g.blocked ? h("span", { class: "pill bug" }, "Blocked") : null,
+      h("div", { class: "acts" }, h("a", { class: "btn chip", href: "dashboard.html#/g/" + encodeURIComponent(g.id) + "/overview" }, "Dashboard"),
+        h("button", { class: "chip", onclick: (e) => copyText(g.id, e.currentTarget, "Copy ID") }, "Copy ID")))) : [h("div", { class: "empty card" }, "No servers match.")]));
+  }
+  const search = h("input", { type: "search", placeholder: "Search name, ID or owner", "aria-label": "Search servers", oninput: (e) => { q = e.target.value.trim().toLowerCase(); draw(); } });
+  const sel = h("select", { "aria-label": "Sort servers", onchange: (e) => { sortBy = e.target.value; draw(); } },
+    [["name", "Name"], ["members", "Most members"], ["newest", "Recently added"], ["oldest", "Longest with Spectre"]].map(([v, l]) => h("option", { value: v }, l)));
+  const exp = h("button", { onclick: () => csvDownload("spectre-servers.csv", [["id", "name", "members", "owner_id", "owner_name", "added_utc", "created_utc", "blocked"],
+    ...view().map((g) => [g.id, g.name, g.members, g.owner_id, g.owner_name, iso(g.joined), iso(g.created), g.blocked ? "yes" : ""])]) }, "Export CSV");
+  draw();
+  body.replaceChildren(h("div", { class: "toolbar" }, search, sel, exp, h("a", { class: "btn", href: "dashboard.html#/dev" }, "Remove or block a server")), h("p", { class: "stamp" }, count), list);
+}
+
+async function tabActivity(body) {
+  body.replaceChildren(skRows(3));
+  let j; try { j = await api("/api/dev/history"); } catch (ex) { locked(ex, body); return; }
+  const blockedBox = h("div", { class: "list" }), arm = { id: null };
+  function drawBlocked() {
+    blockedBox.replaceChildren(...(j.blocked.length ? j.blocked.map((b) => h("div", { class: "card sv rise" },
+      h("div", { class: "info" }, h("b", null, "Server " + b.id), h("span", null, (b.reason || "No reason saved") + (b.at ? " · " + ago(b.at) : ""))),
+      h("div", { class: "acts" }, h("button", { class: "danger chip", onclick: (e) => busy(e.currentTarget, async () => {
+        if (arm.id !== b.id) { arm.id = b.id; drawBlocked(); return; }
+        try { await api("/api/dev/unblock", { method: "POST", body: JSON.stringify({ guild_id: b.id }) }); j.blocked = j.blocked.filter((x) => x.id !== b.id); arm.id = null; drawBlocked(); }
+        catch (ex) { if (!locked(ex, body)) blockedBox.prepend(banner("err", ex.message)); }
+      }) }, arm.id === b.id ? "Click again to unblock" : "Unblock")))) : [h("div", { class: "empty card" }, "No servers are blocked.")]));
+  }
+  drawBlocked();
+  const acts = j.actions.length ? j.actions.map((a) => h("div", { class: "card item rise" },
+    h("div", { class: "top" }, h("span", { class: "pill" + (a.action === "unblocked" ? " done" : " bug") }, String(a.action || "action")), a.blocked ? h("span", { class: "pill raid" }, "Blocked") : null,
+      a.notified ? h("span", { class: "pill suggestion" }, "Owner notified") : null, h("span", { class: "when", title: a.at ? new Date(a.at * 1000).toLocaleString() : "" }, a.at ? ago(a.at) : "")),
+    h("p", null, (a.guild_name || "Server " + a.guild_id) + (a.reason ? ": " + a.reason : "")),
+    h("dl", null, h("div", null, h("dt", null, "By"), h("dd", null, a.by_name || a.by))))) : [h("div", { class: "empty card" }, "No developer actions yet.")];
+  body.replaceChildren(h("h2", null, "Blocklist"), blockedBox, h("h2", { style: "margin-top:28px" }, "Recent developer actions"), h("div", { class: "tl" }, acts));
+}
+
+function tabTools(body) {
+  const link = (href, title, text, ext) => h("a", { href, target: ext ? "_blank" : null, rel: ext ? "noopener" : null }, h("b", null, title), h("span", null, text));
+  const out = h("p", { class: "out", role: "status" }, "");
+  const health = h("button", { onclick: (e) => busy(e.currentTarget, async () => {
+    const t0 = performance.now();
+    try { const r = await fetch(API + "/health", { cache: "no-store" }); const j = await r.json(); const ms = Math.round(performance.now() - t0);
+      out.className = "out " + (r.ok && j.ok ? "ok" : "bad"); out.textContent = (r.ok && j.ok ? "API is up" : "API answered with a problem") + " · " + ms + " ms round trip";
+    } catch (ex) { out.className = "out bad"; out.textContent = "Couldn't reach the API."; }
+  }) }, "Run health check");
+  const lockNow = h("button", { class: "danger", onclick: (e) => busy(e.currentTarget, async () => { try { await api("/api/dev/lock", { method: "POST", body: "{}" }); } catch (ex) {} clearInterval(statusTimer); viewUnlock(banner("ok", "Developer Mode locked.")); }) }, "Lock now");
+  body.replaceChildren(h("div", { class: "tools" },
+    h("div", { class: "card rise" }, h("b", null, "API health check"), h("span", null, "Checks the bot's web server and measures the round trip from your browser."), health, out),
+    h("div", { class: "card rise" }, h("b", null, "Your Discord ID"), h("span", null, me ? me.id : ""), h("button", { onclick: (e) => copyText(me.id, e.currentTarget, "Copy ID") }, "Copy ID")),
+    h("div", { class: "card rise" }, h("b", null, "Lock Developer Mode"), h("span", null, "End your unlocked session now instead of waiting 15 minutes."), lockNow),
+    link("dashboard.html#/dev", "Developer Mode", "Removal with a rule, plus the full history and blocklist."),
+    link("dashboard.html", "Server dashboard", "Open any server's settings and analytics (Developer Mode must be on)."),
+    link(API + "/health", "API health (raw)", "Returns ok when the bot's web server is up.", true),
+    link("https://discord.gg/2TRn6c24au", "Support server", "Where users ask for help.", true),
+    link("terms.html", "Terms of Use", "The rules the removal reasons point to."),
+    link("privacy.html", "Privacy Policy", "What Spectre stores and why.")));
+}
+
+(async function init() {
+  const q = new URLSearchParams(location.search).get("error");
+  const note = q ? banner("err", "Login didn't finish. Please try again.") : null;
+  try {
+    const j = await api("/api/me"); me = j.user; showMe();
+    if (!j.is_owner) return viewNotOwner();
+    if (!j.dev_unlocked) return viewUnlock(note);
+    viewConsole();
+  } catch (ex) {
+    if (ex.status === 401) { me = null; showMe(); return viewLogin(note); }
+    setApp(banner("err", ex.message), h("p", null, h("button", { onclick: (e) => busy(e.currentTarget, init) }, "Try again")));
+  }
+})();
+</script>
+</body>
+</html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Developers | Spectre</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#09070F">
+<link rel="icon" type="image/webp" href="data:image/webp;base64,UklGRgACAABXRUJQVlA4IPQBAADQCwCdASpAAEAAPrVQoUwnJKMiLBVaaOAWiWoAzxvjKT/AYrnAj24HmA3JnJa1/e5JX2rszLsGOpIHF6QxpJtdHXmEFXJJlDPVi3wt+YESGVp0I2+i0IHKp4bS26sT1lrbVfe2w2lAAP78URfdJqHsDpmn9cTv4xFXtuFpzsc5beA9297WPfi+tYckcCPGUyvJMi8oV4IuRwf3c1WlCIgOyPSuUsyovoenYxw17p6ziUeQaI+SN4UHmC/YQI6/8IUYlgQGvGuVRH0M33DTVd/irzGVGVWtAMYu95ez2UBdIc84pYWingaYCP6hsTtA5kmSGJ9vCZefCzf3jwi/tSXXZri/FysNzgsrldK4wR/xUQQOnXyaYVDsYyENi9knXZ3/ds9PTVzk0vn6sNxVO1uiE9QzU1SQdh1a5cNLU5KB1LlH/tVePMru8l7Kx7DhPWDoVF1IWBiRyPaZN7k2NpN32RCn/AgeKTjFojzQBoYndG4kUG4lK6mWkOa59Refz3/Th70VVHfK8+9nERuEkeDYF+DZSqEMu1DyFGiu0IVPc2FvXPyT015DXzlXuyDgqGjCEMeT1+qFN/+TgwRgbA/cFb7qiW5M5WmD6yRFz8+2x3Hd3Ht449z5HGx0Rw827ozaW12mpyH/mMt1ShKpfgAuzUAAAA==">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#07060E; --ink:#EEE9F8; --muted:#ADA7C6; --faint:#7B7899; --accent:#FF5CD1; --cyan:#5FE3F0; --rose:#FF9FB0; --ok:#6EE7A8; --warn:#FFC857;
+  --line:rgba(190,175,255,.2); --soft:rgba(190,175,255,.07); --card:rgba(24,18,46,.72); color-scheme:dark;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace; }
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+body { margin:0; background:var(--bg) radial-gradient(90% 60% at 50% 0%,#1B1233 0%,#09070F 60%,#040309 100%) fixed; color:var(--ink); font:400 16px/1.6 var(--font);
+  padding:0 max(18px,env(safe-area-inset-right,0px)) 90px max(18px,env(safe-area-inset-left,0px)); overflow-x:hidden; min-height:100vh; }
+a { color:var(--ink); text-decoration-color:var(--accent); text-underline-offset:4px; }
+a:hover { color:var(--accent); }
+:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+.glow { position:fixed; border-radius:50%; filter:blur(130px); z-index:-1; pointer-events:none; opacity:.28; }
+.g1 { width:640px; height:640px; left:-240px; top:-200px; background:#FF4FD0; }
+.g2 { width:600px; height:600px; right:-260px; bottom:60px; background:#4B5BFF; opacity:.24; }
+.wrap { max-width:1000px; margin:0 auto; position:relative; }
+header { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px 0; flex-wrap:wrap; }
+.brand { display:flex; align-items:center; gap:10px; font:700 1.2rem/1 var(--font); text-decoration:none; }
+.brand img { height:34px; width:auto; mix-blend-mode:screen; }
+.brand small { font:500 .75rem/1 var(--font); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:5px 9px; margin-left:4px; }
+.me { display:flex; align-items:center; gap:10px; font-size:.92rem; color:var(--muted); }
+.me img { width:30px; height:30px; border-radius:50%; }
+button, .btn { font:600 .92rem/1 var(--font); cursor:pointer; border-radius:99px; border:1px solid var(--line); background:var(--soft); color:var(--ink); padding:12px 18px; min-height:44px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
+button:hover, .btn:hover { border-color:var(--accent); color:var(--ink); }
+.primary { background:linear-gradient(100deg,#FF5CD1,#6B5BFF 60%,#3DB8FF); border:0; color:#fff; box-shadow:0 8px 34px rgba(150,80,255,.4); font-weight:700; }
+.danger { border-color:rgba(255,120,140,.55); color:var(--rose); }
+button[disabled] { opacity:.5; cursor:not-allowed; }
+h1 { font:800 clamp(2rem,6vw,3rem)/1.05 var(--font); letter-spacing:-.03em; margin:8px 0 10px; }
+h2 { font:700 1.25rem/1.2 var(--font); margin:0 0 14px; }
+.muted { color:var(--muted); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+.banner { border:1px solid var(--line); border-radius:14px; padding:12px 16px; margin:0 0 18px; background:var(--soft); }
+.banner.err { border-color:rgba(255,120,140,.55); background:rgba(255,90,120,.1); }
+.banner.ok { border-color:rgba(110,231,168,.5); background:rgba(110,231,168,.08); }
+.hero { padding:44px 0 26px; max-width:36em; }
+.hero p { font-size:1.1rem; color:var(--muted); }
+.tabs { display:flex; gap:6px; margin:0 0 22px; border-bottom:1px solid var(--line); overflow-x:auto; }
+.tabs button { border:0; border-radius:10px 10px 0 0; background:none; color:var(--muted); padding:12px 16px; border-bottom:2px solid transparent; white-space:nowrap; }
+.tabs button[aria-selected=true] { color:var(--ink); border-bottom-color:var(--accent); }
+.badge { display:inline-block; min-width:22px; padding:2px 7px; margin-left:8px; border-radius:99px; background:var(--accent); color:#1a0b16; font-size:.75rem; font-weight:800; text-align:center; }
+.stats { display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); }
+.stat b { display:block; font:800 1.9rem/1.1 var(--font); letter-spacing:-.02em; }
+.stat span { color:var(--muted); font-size:.88rem; }
+.meta { margin-top:16px; color:var(--faint); font:400 .82rem/1.6 var(--mono); }
+.row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 16px; }
+.chip { min-height:40px; padding:9px 14px; font-size:.86rem; }
+.chip[aria-pressed=true] { border-color:var(--accent); background:rgba(255,92,209,.14); }
+.list { display:grid; gap:12px; }
+.item .top { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+.pill { font:700 .72rem/1 var(--font); letter-spacing:.1em; text-transform:uppercase; padding:6px 10px; border-radius:99px; border:1px solid var(--line); }
+.pill.bug { color:var(--rose); border-color:rgba(255,159,176,.5); }
+.pill.raid { color:var(--warn); border-color:rgba(255,200,87,.5); }
+.pill.suggestion { color:var(--cyan); border-color:rgba(95,227,240,.5); }
+.pill.done { color:var(--ok); border-color:rgba(110,231,168,.5); }
+.item .when { margin-left:auto; color:var(--faint); font-size:.85rem; }
+.item p { margin:0 0 10px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.item dl { display:flex; gap:6px 22px; flex-wrap:wrap; margin:0 0 12px; font-size:.88rem; color:var(--muted); }
+.item dt { display:inline; color:var(--faint); } .item dd { display:inline; margin:0 0 0 6px; overflow-wrap:anywhere; }
+.acts { display:flex; gap:8px; flex-wrap:wrap; }
+.acts button { min-height:40px; padding:9px 14px; font-size:.86rem; }
+.sv { display:flex; gap:14px; align-items:center; }
+.sv .ic { width:44px; height:44px; border-radius:13px; background:linear-gradient(135deg,#FF5CD1,#4FD3FF); flex:none; object-fit:cover; display:grid; place-items:center; font-weight:800; color:#fff; }
+.sv b { display:block; overflow-wrap:anywhere; } .sv span { font-size:.85rem; color:var(--muted); }
+.sv .tag { margin-left:auto; }
+.tools { display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); }
+.tools > a { display:block; text-decoration:none; padding:18px; border:1px solid var(--line); border-radius:16px; background:var(--card); }
+.tools > a:hover { border-color:var(--accent); }
+.tools > a b { display:block; } .tools > a span { color:var(--muted); font-size:.88rem; }
+form.unlock { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+form.unlock input { flex:1 1 220px; min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--ink); font:500 1rem var(--mono); }
+.empty { color:var(--muted); text-align:center; padding:34px 10px; }
+.sk { display:block; border-radius:10px; background:linear-gradient(90deg,rgba(190,175,255,.08) 25%,rgba(190,175,255,.2) 50%,rgba(190,175,255,.08) 75%); background-size:200% 100%; animation:shimmer 1.4s linear infinite; }
+@keyframes shimmer { to { background-position:-200% 0; } }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes rise { from { opacity:0; transform:translateY(6px); } }
+.rise { animation:rise .28s ease-out both; }
+.spin { display:inline-block; width:18px; height:18px; border-radius:50%; border:2px solid var(--line); border-top-color:var(--accent); animation:spin .8s linear infinite; vertical-align:-3px; }
+.boot { display:flex; align-items:center; gap:12px; padding:60px 0; color:var(--muted); }
+button.busy { position:relative; color:transparent !important; pointer-events:none; }
+button.busy::after { content:""; position:absolute; inset:0; margin:auto; width:16px; height:16px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+.sk-card { display:grid; gap:10px; }
+.toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 16px; }
+.toolbar input[type=search], .toolbar select { min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--ink); font:500 .95rem var(--font); }
+.toolbar input[type=search] { flex:1 1 200px; }
+.toolbar select option { background:#14102a; color:var(--ink); }
+.sv .acts { margin-left:auto; }
+.sv { flex-wrap:wrap; }
+.sv .info { flex:1 1 220px; min-width:0; }
+.tl { display:grid; gap:10px; }
+.tl .item p { margin:6px 0 0; }
+.out { margin:10px 0 0; font:500 .85rem/1.5 var(--mono); color:var(--muted); min-height:1.5em; }
+.out.ok { color:var(--ok); } .out.bad { color:var(--rose); }
+.tools .card { display:block; }
+.tools .card b { display:block; margin-bottom:2px; } .tools .card > span { color:var(--muted); font-size:.88rem; display:block; margin-bottom:12px; }
+.tools .card button { min-height:40px; padding:9px 16px; font-size:.88rem; }
+.stamp { color:var(--faint); font-size:.85rem; }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior:auto !important; } .sk, .rise { animation:none !important; } }
 </style>
 </head>
