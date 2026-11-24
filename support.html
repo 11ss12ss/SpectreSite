@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Support | Spectre</title>
+<meta name="description" content="Open a support ticket with the Spectre team: questions, bugs, raid or server issues and appeals.">
+<meta name="theme-color" content="#09070F">
+<link rel="icon" type="image/webp" href="data:image/webp;base64,UklGRgACAABXRUJQVlA4IPQBAADQCwCdASpAAEAAPrVQoUwnJKMiLBVaaOAWiWoAzxvjKT/AYrnAj24HmA3JnJa1/e5JX2rszLsGOpIHF6QxpJtdHXmEFXJJlDPVi3wt+YESGVp0I2+i0IHKp4bS26sT1lrbVfe2w2lAAP78URfdJqHsDpmn9cTv4xFXtuFpzsc5beA9297WPfi+tYckcCPGUyvJMi8oV4IuRwf3c1WlCIgOyPSuUsyovoenYxw17p6ziUeQaI+SN4UHmC/YQI6/8IUYlgQGvGuVRH0M33DTVd/irzGVGVWtAMYu95ez2UBdIc84pYWingaYCP6hsTtA5kmSGJ9vCZefCzf3jwi/tSXXZri/FysNzgsrldK4wR/xUQQOnXyaYVDsYyENi9knXZ3/ds9PTVzk0vn6sNxVO1uiE9QzU1SQdh1a5cNLU5KB1LlH/tVePMru8l7Kx7DhPWDoVF1IWBiRyPaZN7k2NpN32RCn/AgeKTjFojzQBoYndG4kUG4lK6mWkOa59Refz3/Th70VVHfK8+9nERuEkeDYF+DZSqEMu1DyFGiu0IVPc2FvXPyT015DXzlXuyDgqGjCEMeT1+qFN/+TgwRgbA/cFb7qiW5M5WmD6yRFz8+2x3Hd3Ht449z5HGx0Rw827ozaW12mpyH/mMt1ShKpfgAuzUAAAA==">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root { --bg:#07060E; --ink:#EEE9F8; --muted:#ADA7C6; --faint:#7B7899; --accent:#FF5CD1; --cyan:#5FE3F0; --rose:#FF9FB0; --ok:#6EE7A8; --warn:#FFC857;
+  --line:rgba(190,175,255,.2); --soft:rgba(190,175,255,.07); --card:rgba(24,18,46,.72); color-scheme:dark;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace; }
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+body { margin:0; background:var(--bg) radial-gradient(90% 60% at 50% 0%,#1B1233 0%,#09070F 60%,#040309 100%) fixed; color:var(--ink); font:400 16px/1.6 var(--font);
+  padding:0 max(18px,env(safe-area-inset-right,0px)) 90px max(18px,env(safe-area-inset-left,0px)); overflow-x:hidden; min-height:100vh; }
+a { color:var(--ink); text-decoration-color:var(--accent); text-underline-offset:4px; }
+a:hover { color:var(--accent); }
+:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+.glow { position:fixed; border-radius:50%; filter:blur(130px); z-index:-1; pointer-events:none; opacity:.28; }
+.g1 { width:640px; height:640px; left:-240px; top:-200px; background:#FF4FD0; }
+.g2 { width:600px; height:600px; right:-260px; bottom:60px; background:#4B5BFF; opacity:.24; }
+.wrap { max-width:1000px; margin:0 auto; position:relative; }
+header { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px 0; flex-wrap:wrap; }
+.brand { display:flex; align-items:center; gap:10px; font:700 1.2rem/1 var(--font); text-decoration:none; }
+.brand img { height:34px; width:auto; mix-blend-mode:screen; }
+.brand small { font:500 .75rem/1 var(--font); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:5px 9px; margin-left:4px; }
+.me { display:flex; align-items:center; gap:10px; font-size:.92rem; color:var(--muted); }
+.me img { width:30px; height:30px; border-radius:50%; }
+button, .btn { font:600 .92rem/1 var(--font); cursor:pointer; border-radius:99px; border:1px solid var(--line); background:var(--soft); color:var(--ink); padding:12px 18px; min-height:44px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
+button:hover, .btn:hover { border-color:var(--accent); color:var(--ink); }
+.primary { background:linear-gradient(100deg,#FF5CD1,#6B5BFF 60%,#3DB8FF); border:0; color:#fff; box-shadow:0 8px 34px rgba(150,80,255,.4); font-weight:700; }
+.danger { border-color:rgba(255,120,140,.55); color:var(--rose); }
+button[disabled] { opacity:.5; cursor:not-allowed; }
+h1 { font:800 clamp(2rem,6vw,3rem)/1.05 var(--font); letter-spacing:-.03em; margin:8px 0 10px; }
+h2 { font:700 1.25rem/1.2 var(--font); margin:0 0 14px; }
+.muted { color:var(--muted); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+.banner { border:1px solid var(--line); border-radius:14px; padding:12px 16px; margin:0 0 18px; background:var(--soft); }
+.banner.err { border-color:rgba(255,120,140,.55); background:rgba(255,90,120,.1); }
+.banner.ok { border-color:rgba(110,231,168,.5); background:rgba(110,231,168,.08); }
+.hero { padding:44px 0 26px; max-width:36em; }
+.hero p { font-size:1.1rem; color:var(--muted); }
+.tabs { display:flex; gap:6px; margin:0 0 22px; border-bottom:1px solid var(--line); overflow-x:auto; }
+.tabs button { border:0; border-radius:10px 10px 0 0; background:none; color:var(--muted); padding:12px 16px; border-bottom:2px solid transparent; white-space:nowrap; }
+.tabs button[aria-selected=true] { color:var(--ink); border-bottom-color:var(--accent); }
+.badge { display:inline-block; min-width:22px; padding:2px 7px; margin-left:8px; border-radius:99px; background:var(--accent); color:#1a0b16; font-size:.75rem; font-weight:800; text-align:center; }
+.stats { display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); }
+.stat b { display:block; font:800 1.9rem/1.1 var(--font); letter-spacing:-.02em; }
+.stat span { color:var(--muted); font-size:.88rem; }
+.meta { margin-top:16px; color:var(--faint); font:400 .82rem/1.6 var(--mono); }
+.row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 16px; }
+.chip { min-height:40px; padding:9px 14px; font-size:.86rem; }
+.chip[aria-pressed=true] { border-color:var(--accent); background:rgba(255,92,209,.14); }
+.list { display:grid; gap:12px; }
+.item .top { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+.pill { font:700 .72rem/1 var(--font); letter-spacing:.1em; text-transform:uppercase; padding:6px 10px; border-radius:99px; border:1px solid var(--line); }
+.pill.bug { color:var(--rose); border-color:rgba(255,159,176,.5); }
+.pill.raid { color:var(--warn); border-color:rgba(255,200,87,.5); }
+.pill.suggestion { color:var(--cyan); border-color:rgba(95,227,240,.5); }
+.pill.done { color:var(--ok); border-color:rgba(110,231,168,.5); }
+.item .when { margin-left:auto; color:var(--faint); font-size:.85rem; }
+.item p { margin:0 0 10px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.item dl { display:flex; gap:6px 22px; flex-wrap:wrap; margin:0 0 12px; font-size:.88rem; color:var(--muted); }
+.item dt { display:inline; color:var(--faint); } .item dd { display:inline; margin:0 0 0 6px; overflow-wrap:anywhere; }
+.acts { display:flex; gap:8px; flex-wrap:wrap; }
+.acts button { min-height:40px; padding:9px 14px; font-size:.86rem; }
+.sv { display:flex; gap:14px; align-items:center; }
+.sv .ic { width:44px; height:44px; border-radius:13px; background:linear-gradient(135deg,#FF5CD1,#4FD3FF); flex:none; object-fit:cover; display:grid; place-items:center; font-weight:800; color:#fff; }
+.sv b { display:block; overflow-wrap:anywhere; } .sv span { font-size:.85rem; color:var(--muted); }
+.sv .tag { margin-left:auto; }
+.tools { display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); }
+.tools > a { display:block; text-decoration:none; padding:18px; border:1px solid var(--line); border-radius:16px; background:var(--card); }
+.tools > a:hover { border-color:var(--accent); }
+.tools > a b { display:block; } .tools > a span { color:var(--muted); font-size:.88rem; }
+form.unlock { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+form.unlock input { flex:1 1 220px; min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--ink); font:500 1rem var(--mono); }
+.empty { color:var(--muted); text-align:center; padding:34px 10px; }
+.sk { display:block; border-radius:10px; background:linear-gradient(90deg,rgba(190,175,255,.08) 25%,rgba(190,175,255,.2) 50%,rgba(190,175,255,.08) 75%); background-size:200% 100%; animation:shimmer 1.4s linear infinite; }
+@keyframes shimmer { to { background-position:-200% 0; } }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes rise { from { opacity:0; transform:translateY(6px); } }
+.rise { animation:rise .28s ease-out both; }
+.spin { display:inline-block; width:18px; height:18px; border-radius:50%; border:2px solid var(--line); border-top-color:var(--accent); animation:spin .8s linear infinite; vertical-align:-3px; }
+.boot { display:flex; align-items:center; gap:12px; padding:60px 0; color:var(--muted); }
+button.busy { position:relative; color:transparent !important; pointer-events:none; }
+button.busy::after { content:""; position:absolute; inset:0; margin:auto; width:16px; height:16px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+.sk-card { display:grid; gap:10px; }
+.toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 16px; }
+.toolbar input[type=search], .toolbar select { min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--ink); font:500 .95rem var(--font); }
+.toolbar input[type=search] { flex:1 1 200px; }
+.toolbar select option { background:#14102a; color:var(--ink); }
+.sv .acts { margin-left:auto; }
+.sv { flex-wrap:wrap; }
+.sv .info { flex:1 1 220px; min-width:0; }
+.tl { display:grid; gap:10px; }
+.tl .item p { margin:6px 0 0; }
+.out { margin:10px 0 0; font:500 .85rem/1.5 var(--mono); color:var(--muted); min-height:1.5em; }
+.out.ok { color:var(--ok); } .out.bad { color:var(--rose); }
+.tools .card { display:block; }
+.tools .card b { display:block; margin-bottom:2px; } .tools .card > span { color:var(--muted); font-size:.88rem; display:block; margin-bottom:12px; }
+.tools .card button { min-height:40px; padding:9px 16px; font-size:.88rem; }
+.stamp { color:var(--faint); font-size:.85rem; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior:auto !important; } .sk, .rise { animation:none !important; } }
+
+.wrap { max-width:760px; }
+label { display:block; font:600 .9rem/1.3 var(--font); margin:0 0 8px; }
+label small { font-weight:400; color:var(--faint); }
+input, textarea { width:100%; font:400 1rem/1.5 var(--font); color:var(--ink); background:rgba(8,6,18,.7); border:1px solid var(--line); border-radius:12px; padding:12px 14px; min-height:46px; }
+textarea { min-height:150px; resize:vertical; }
+input:focus, textarea:focus { outline:2px solid var(--accent); outline-offset:1px; border-color:transparent; }
+.field { margin:0 0 18px; }
+.hp { position:absolute; left:-9999px; width:1px; height:1px; overflow:hidden; }
+.count { text-align:right; font-size:.8rem; color:var(--faint); margin-top:6px; }
+.cats { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px; border:0; padding:0; margin:0 0 18px; }
+.cats legend { font:600 .9rem/1.3 var(--font); margin:0 0 8px; padding:0; }
+.cat input { position:absolute; opacity:0; width:1px; height:1px; min-height:0; }
+.cat span { display:block; padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:var(--soft); cursor:pointer; font-weight:600; font-size:.92rem; }
+.cat small { display:block; font-weight:400; color:var(--muted); font-size:.8rem; margin-top:2px; }
+.cat input:checked + span { border-color:var(--accent); background:rgba(255,92,209,.14); }
+.cat input:focus-visible + span { outline:2px solid var(--accent); outline-offset:2px; }
+.codebox { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; margin:0 0 12px; }
+.codebox b { display:block; font:500 clamp(1.05rem,5.2vw,1.5rem)/1.2 var(--mono); letter-spacing:.06em; overflow-wrap:anywhere; }
+.codebox span { color:var(--muted); font-size:.82rem; }
+.thread { display:grid; gap:12px; margin:18px 0; }
+.msg { max-width:88%; padding:12px 14px; border-radius:16px; border:1px solid var(--line); background:var(--soft); white-space:pre-wrap; overflow-wrap:anywhere; }
+.msg.staff { justify-self:start; border-color:rgba(95,227,240,.45); background:rgba(95,227,240,.07); }
+.msg.you { justify-self:end; border-color:rgba(255,92,209,.4); background:rgba(255,92,209,.08); }
+.msg small { display:block; color:var(--faint); font-size:.75rem; margin-bottom:4px; letter-spacing:.04em; }
+.pill.open { color:var(--warn); border-color:rgba(255,200,87,.5); }
+.pill.answered { color:var(--cyan); border-color:rgba(95,227,240,.5); }
+.pill.closed { color:var(--ok); border-color:rgba(110,231,168,.5); }
+.tk { display:flex; align-items:center; gap:12px; width:100%; text-align:left; border-radius:14px; padding:12px 14px; }
+.tk b { font-family:var(--mono); font-weight:500; }
+.tk span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; color:var(--muted); }
+.note { color:var(--faint); font-size:.85rem; }
+.spin { width:16px; height:16px; border-radius:50%; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; animation:sp .7s linear infinite; }
+@keyframes sp { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .spin { animation-duration:2s; } }
+footer { margin-top:40px; color:var(--faint); font-size:.85rem; }
+</style>
+</head>
+<body>
+<div class="glow g1"></div><div class="glow g2"></div>
+<div class="wrap">
+  <header>
+    <a class="brand" href="index.html"><img src="data:image/webp;base64,UklGRgACAABXRUJQVlA4IPQBAADQCwCdASpAAEAAPrVQoUwnJKMiLBVaaOAWiWoAzxvjKT/AYrnAj24HmA3JnJa1/e5JX2rszLsGOpIHF6QxpJtdHXmEFXJJlDPVi3wt+YESGVp0I2+i0IHKp4bS26sT1lrbVfe2w2lAAP78URfdJqHsDpmn9cTv4xFXtuFpzsc5beA9297WPfi+tYckcCPGUyvJMi8oV4IuRwf3c1WlCIgOyPSuUsyovoenYxw17p6ziUeQaI+SN4UHmC/YQI6/8IUYlgQGvGuVRH0M33DTVd/irzGVGVWtAMYu95ez2UBdIc84pYWingaYCP6hsTtA5kmSGJ9vCZefCzf3jwi/tSXXZri/FysNzgsrldK4wR/xUQQOnXyaYVDsYyENi9knXZ3/ds9PTVzk0vn6sNxVO1uiE9QzU1SQdh1a5cNLU5KB1LlH/tVePMru8l7Kx7DhPWDoVF1IWBiRyPaZN7k2NpN32RCn/AgeKTjFojzQBoYndG4kUG4lK6mWkOa59Refz3/Th70VVHfK8+9nERuEkeDYF+DZSqEMu1DyFGiu0IVPc2FvXPyT015DXzlXuyDgqGjCEMeT1+qFN/+TgwRgbA/cFb7qiW5M5WmD6yRFz8+2x3Hd3Ht449z5HGx0Rw827ozaW12mpyH/mMt1ShKpfgAuzUAAAA==" alt="">Spectre<small>Support</small></a>
+    <a class="btn" href="index.html">Back to site</a>
+  </header>
+  <section class="hero">
+    <h1>How can we help?</h1>
+    <p>Open a ticket and the Spectre team will answer it here. You don't need an account.</p>
+  </section>
+
+  <div class="tabs" role="tablist" aria-label="Support">
+    <button role="tab" id="t-new" aria-selected="true" aria-controls="p-new">Open a ticket</button>
+    <button role="tab" id="t-chk" aria-selected="false" aria-controls="p-chk">Check a ticket</button>
+  </div>
+
+  <div id="msg" role="status" aria-live="polite"></div>
+
+  <section id="p-new" class="card" role="tabpanel" aria-labelledby="t-new">
+    <form id="f" novalidate>
+      <fieldset class="cats">
+        <legend>What is it about?</legend>
+        <label class="cat"><input type="radio" name="category" value="help" checked><span>Question or help<small>Setup, commands, how things work</small></span></label>
+        <label class="cat"><input type="radio" name="category" value="bug"><span>Bug<small>Something is broken</small></span></label>
+        <label class="cat"><input type="radio" name="category" value="server"><span>Server or raid issue<small>Raids, spam, scams</small></span></label>
+        <label class="cat"><input type="radio" name="category" value="appeal"><span>Block or removal appeal<small>Spectre left or was blocked</small></span></label>
+        <label class="cat"><input type="radio" name="category" value="other"><span>Something else</span></label>
+      </fieldset>
+      <div class="field"><label for="subject">Title</label><input id="subject" maxlength="100" autocomplete="off" placeholder="A few words about the problem"></div>
+      <div class="field"><label for="body">Details</label><textarea id="body" maxlength="1500" placeholder="What happened? Include your server name or ID, and anything you tried."></textarea><div class="count" id="cnt">0 / 1500</div></div>
+      <div class="field"><label for="contact">Discord username <small>(optional, only if you want us to reach out on Discord)</small></label><input id="contact" maxlength="100" autocomplete="off"></div>
+      <div class="hp" aria-hidden="true"><label>Website <input id="website" tabindex="-1" autocomplete="off"></label></div>
+      <p class="note">Never put passwords or bot tokens in a ticket. We will never ask for them.</p>
+      <button class="primary" id="send" type="submit">Open ticket</button>
+    </form>
+    <div id="done" hidden>
+      <h2>Ticket opened</h2>
+      <p class="muted">Save these two. The code is the only way to read our reply, and we can't show it again.</p>
+      <div class="codebox card"><div><span>Ticket number</span><b id="o-ref"></b></div><button type="button" data-copy="o-ref">Copy</button></div>
+      <div class="codebox card"><div><span>Private code</span><b id="o-code"></b></div><button type="button" data-copy="o-code">Copy</button></div>
+      <p class="note">This device will also remember the ticket under "Check a ticket".</p>
+      <div class="row"><button class="primary" id="open-now" type="button">View ticket</button><button id="another" type="button">Open another</button></div>
+    </div>
+  </section>
+
+  <section id="p-chk" class="card" role="tabpanel" aria-labelledby="t-chk" hidden>
+    <div id="lookup">
+      <form id="lf" novalidate>
+        <div class="field"><label for="l-ref">Ticket number</label><input id="l-ref" maxlength="12" autocomplete="off" placeholder="T-ABC123" style="text-transform:uppercase"></div>
+        <div class="field"><label for="l-code">Private code</label><input id="l-code" maxlength="20" autocomplete="off" placeholder="XXXX-XXXX-XXXX" style="text-transform:uppercase"></div>
+        <button class="primary" id="look" type="submit">Open ticket</button>
+      </form>
+      <div id="mine" hidden style="margin-top:26px"><h2>On this device</h2><div class="list" id="mine-list"></div></div>
+    </div>
+    <div id="view" hidden></div>
+  </section>
+
+  <footer>Need something faster? Join the <a href="https://discord.gg/2TRn6c24au">support server</a>. For general ideas use the Feedback button on the main site.</footer>
+</div>
+<script>
+"use strict";
+const API = "https://api.spectrebot.org";
+const $ = (id) => document.getElementById(id);
+const CATS = { help: "Help", bug: "Bug", server: "Server", appeal: "Appeal", other: "Other" };
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) { if (k === "class") el.className = v; else if (k.startsWith("on")) el.addEventListener(k.slice(2), v); else el.setAttribute(k, v); }
+  for (const kid of kids) if (kid != null) el.append(kid.nodeType ? kid : document.createTextNode(kid));
+  return el;
+}
+function banner(text, kind) {
+  const box = $("msg"); box.replaceChildren();
+  if (text) box.append(h("div", { class: "banner " + (kind || "") }, text));
+}
+async function api(path, body) {
+  let r;
+  try { r = await fetch(API + path, { method: "POST", credentials: "omit", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); }
+  catch { throw new Error("Couldn't reach Spectre. Check your connection and try again."); }
+  let data = {};
+  try { data = await r.json(); } catch {}
+  if (!r.ok) throw new Error(data.error || data.message || "Something went wrong. Please try again.");
+  return data;
+}
+function busy(btn, on, label) {
+  btn.disabled = on;
+  btn.replaceChildren(...(on ? [h("span", { class: "spin" }), " Working…"] : [label]));
+}
+// per-device list of tickets (browser storage can be unavailable, so everything is wrapped)
+const KEY = "spectre_tickets";
+function mine() { try { const v = JSON.parse(localStorage.getItem(KEY) || "[]"); return Array.isArray(v) ? v.filter((t) => t && typeof t.ref === "string" && typeof t.code === "string").slice(0, 20) : []; } catch { return []; } }
+function remember(t) { try { const l = mine().filter((x) => x.ref !== t.ref); l.unshift(t); localStorage.setItem(KEY, JSON.stringify(l.slice(0, 20))); } catch {} }
+function forget(ref) { try { localStorage.setItem(KEY, JSON.stringify(mine().filter((x) => x.ref !== ref))); } catch {} }
+function fmtCode(c) { return c.replace(/(.{4})(?=.)/g, "$1-"); }
+function when(s) { return s ? new Date(s * 1000).toLocaleString([], { dateStyle: "medium", timeStyle: "short" }) : ""; }
+
+// tabs
+function tab(which) {
+  const n = which === "new";
+  $("t-new").setAttribute("aria-selected", n); $("t-chk").setAttribute("aria-selected", !n);
+  $("p-new").hidden = !n; $("p-chk").hidden = n; banner("");
+  if (!n) renderMine();
+}
+$("t-new").onclick = () => tab("new"); $("t-chk").onclick = () => tab("chk");
+
+// open a ticket
+$("body").addEventListener("input", () => { $("cnt").textContent = $("body").value.length + " / 1500"; });
+let last = null;
+$("f").addEventListener("submit", async (e) => {
+  e.preventDefault(); banner("");
+  const subject = $("subject").value.trim(), message = $("body").value.trim();
+  if (subject.length < 3) { banner("Please give the ticket a short title.", "err"); $("subject").focus(); return; }
+  if (message.length < 10) { banner("Please describe the problem a little more (at least 10 characters).", "err"); $("body").focus(); return; }
+  const btn = $("send"); busy(btn, true);
+  try {
+    const d = await api("/api/tickets", { category: document.querySelector("input[name=category]:checked").value, subject, message, contact: $("contact").value.trim(), website: $("website").value });
+    last = { ref: d.ref, code: d.code, subject };
+    if (d.ref !== "XXXXXX") remember({ ...last, at: Date.now() });
+    $("o-ref").textContent = "T-" + d.ref; $("o-code").textContent = fmtCode(d.code);
+    $("f").hidden = true; $("done").hidden = false; $("f").reset(); $("cnt").textContent = "0 / 1500";
+    $("done").scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (err) { banner(err.message, "err"); }
+  busy(btn, false, "Open ticket");
+});
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", async () => {
+  const txt = $(b.dataset.copy).textContent;
+  try { await navigator.clipboard.writeText(txt); b.textContent = "Copied"; } catch { b.textContent = "Select and copy"; }
+  setTimeout(() => (b.textContent = "Copy"), 1800);
+}));
+$("another").onclick = () => { $("done").hidden = true; $("f").hidden = false; $("subject").focus(); };
+$("open-now").onclick = () => { tab("chk"); if (last) show(last.ref, last.code); };
+
+// check a ticket
+function renderMine() {
+  const list = mine(), box = $("mine-list"); box.replaceChildren();
+  $("mine").hidden = !list.length;
+  for (const t of list) box.append(h("button", { class: "tk", type: "button", onclick: () => show(t.ref, t.code) }, h("b", {}, "T-" + t.ref), h("span", {}, t.subject || "")));
+}
+$("lf").addEventListener("submit", (e) => { e.preventDefault(); show($("l-ref").value, $("l-code").value, true); });
+async function show(ref, code, typed) {
+  banner("");
+  const btn = $("look"); if (typed) busy(btn, true);
+  try {
+    const d = await api("/api/tickets/lookup", { ref, code });
+    remember({ ref: d.ticket.ref, code: code.toUpperCase().replace(/[^A-Z0-9]/g, ""), subject: d.ticket.subject, at: Date.now() });
+    draw(d.ticket, code);
+  } catch (err) { banner(err.message, "err"); }
+  if (typed) busy(btn, false, "Open ticket");
+}
+function draw(t, code) {
+  const v = $("view"); v.replaceChildren();
+  $("lookup").hidden = true; v.hidden = false;
+  const thread = h("div", { class: "thread" }, ...t.messages.map((m) => h("div", { class: "msg " + (m.from === "staff" ? "staff" : "you") }, h("small", {}, (m.from === "staff" ? "Spectre team" : "You") + " · " + when(m.at)), m.text)));
+  const ta = h("textarea", { id: "r-body", maxlength: "1500", placeholder: "Write a reply…", "aria-label": "Reply" });
+  const send = h("button", { class: "primary", type: "button" }, t.status === "closed" ? "Reopen with reply" : "Send reply");
+  send.addEventListener("click", async () => {
+    const message = ta.value.trim(); if (message.length < 2) { banner("Write a message first.", "err"); return; }
+    banner(""); busy(send, true);
+    try { const d = await api("/api/tickets/reply", { ref: t.ref, code, message }); draw(d.ticket, code); }
+    catch (err) { banner(err.message, "err"); busy(send, false, "Send reply"); }
+  });
+  const refresh = h("button", { type: "button" }, "Refresh");
+  refresh.addEventListener("click", async () => { busy(refresh, true); try { draw((await api("/api/tickets/lookup", { ref: t.ref, code })).ticket, code); } catch (err) { banner(err.message, "err"); busy(refresh, false, "Refresh"); } });
+  const back = h("button", { type: "button" }, "All tickets");
+  back.addEventListener("click", () => { v.hidden = true; $("lookup").hidden = false; renderMine(); banner(""); });
+  v.append(...[
+    h("div", { class: "item" }, h("div", { class: "top" }, h("b", { class: "mono" }, "T-" + t.ref), h("span", { class: "pill " + t.status }, t.status === "answered" ? "Answered" : t.status === "closed" ? "Closed" : "Open"), h("span", { class: "pill" }, CATS[t.category] || "Other"), h("span", { class: "when" }, "Updated " + when(t.updated))), h("h2", {}, t.subject)),
+    thread,
+    t.status === "closed" ? h("p", { class: "note" }, "This ticket is closed. Replying reopens it.") : null,
+    h("div", { class: "field" }, ta),
+    h("div", { class: "row" }, send, refresh, back)].filter(Boolean));
+}
+const qs = new URLSearchParams(location.search);
+if (qs.get("tab") === "check") tab("chk");
+</script>
+</body>
+</html>
