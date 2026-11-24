@@ -2,9 +2,12 @@
 (function () {
   var API = "https://api.spectrebot.org/api/feedback";
   var css = [
-    ".fb-fab{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:30;display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:rgba(18,14,32,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--ink);font:600 .95rem/1 var(--body);cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.4)}",
+    ".fb-dock{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:30;display:flex;align-items:center;gap:8px}",
+    ".fb-fab{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);background:rgba(18,14,32,.82);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);color:var(--ink);font:600 .95rem/1 var(--body);cursor:pointer;box-shadow:0 8px 30px rgba(0,0,0,.4)}",
     ".fb-fab:hover{border-color:var(--accent);color:var(--ink)}",
     ".fb-fab svg{width:18px;height:18px;stroke:var(--accent)}",
+    ".fb-raid{width:44px;padding:0;justify-content:center}",
+    ".fb-raid svg{stroke:var(--rose)}",
     "dialog.fb{width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 32px);overflow:auto;padding:0;border:1px solid var(--line);border-radius:20px;background:#0D0A1A;color:var(--ink);box-shadow:0 30px 90px rgba(0,0,0,.6)}",
     "dialog.fb::backdrop{background:rgba(4,3,9,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}",
     ".fb-in,.fb-in *{box-sizing:border-box}",
@@ -42,7 +45,12 @@
   var fab = document.createElement("button");
   fab.type = "button"; fab.className = "fb-fab"; fab.innerHTML = ICON + "<span>Feedback</span>";
   fab.setAttribute("aria-haspopup", "dialog");
-  document.body.appendChild(fab);
+  var raidBtn = document.createElement("button");
+  raidBtn.type = "button"; raidBtn.className = "fb-fab fb-raid"; raidBtn.setAttribute("aria-label", "Report a raid"); raidBtn.title = "Report a raid";
+  raidBtn.setAttribute("aria-haspopup", "dialog");
+  raidBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2L12 3z"/><path d="M12 10v5M12 18h.01"/></svg>';
+  var dock = document.createElement("div"); dock.className = "fb-dock"; dock.appendChild(raidBtn); dock.appendChild(fab);
+  document.body.appendChild(dock);
 
   var dlg = document.createElement("dialog");
   dlg.className = "fb"; dlg.setAttribute("aria-labelledby", "fb-title");
@@ -120,6 +128,7 @@
   }
   wire(form);
   fab.addEventListener("click", function () { open("suggestion"); });
+  raidBtn.addEventListener("click", function () { open("raid"); });
   dlg.addEventListener("click", function (e) { if (e.target === dlg) dlg.close(); });
   document.addEventListener("click", function (e) {
     var a = e.target.closest && e.target.closest("[data-feedback]");
