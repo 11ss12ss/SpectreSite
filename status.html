@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Status | Spectre</title>
+<meta name="description" content="Live status of the Spectre bot and its website.">
+<meta name="theme-color" content="#09070F">
+<link rel="icon" type="image/webp" href="data:image/webp;base64,UklGRgACAABXRUJQVlA4IPQBAADQCwCdASpAAEAAPrVQoUwnJKMiLBVaaOAWiWoAzxvjKT/AYrnAj24HmA3JnJa1/e5JX2rszLsGOpIHF6QxpJtdHXmEFXJJlDPVi3wt+YESGVp0I2+i0IHKp4bS26sT1lrbVfe2w2lAAP78URfdJqHsDpmn9cTv4xFXtuFpzsc5beA9297WPfi+tYckcCPGUyvJMi8oV4IuRwf3c1WlCIgOyPSuUsyovoenYxw17p6ziUeQaI+SN4UHmC/YQI6/8IUYlgQGvGuVRH0M33DTVd/irzGVGVWtAMYu95ez2UBdIc84pYWingaYCP6hsTtA5kmSGJ9vCZefCzf3jwi/tSXXZri/FysNzgsrldK4wR/xUQQOnXyaYVDsYyENi9knXZ3/ds9PTVzk0vn6sNxVO1uiE9QzU1SQdh1a5cNLU5KB1LlH/tVePMru8l7Kx7DhPWDoVF1IWBiRyPaZN7k2NpN32RCn/AgeKTjFojzQBoYndG4kUG4lK6mWkOa59Refz3/Th70VVHfK8+9nERuEkeDYF+DZSqEMu1DyFGiu0IVPc2FvXPyT015DXzlXuyDgqGjCEMeT1+qFN/+TgwRgbA/cFb7qiW5M5WmD6yRFz8+2x3Hd3Ht449z5HGx0Rw827ozaW12mpyH/mMt1ShKpfgAuzUAAAA==">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+
+:root { --bg:#07060E; --ink:#EEE9F8; --muted:#ADA7C6; --faint:#7B7899; --accent:#FF5CD1; --cyan:#5FE3F0; --rose:#FF9FB0; --ok:#6EE7A8; --warn:#FFC857;
+  --line:rgba(190,175,255,.2); --soft:rgba(190,175,255,.07); --card:rgba(24,18,46,.72); color-scheme:dark;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace; }
+* { box-sizing:border-box; }
+[hidden] { display:none !important; }
+body { margin:0; background:var(--bg) radial-gradient(90% 60% at 50% 0%,#1B1233 0%,#09070F 60%,#040309 100%) fixed; color:var(--ink); font:400 16px/1.6 var(--font);
+  padding:0 max(18px,env(safe-area-inset-right,0px)) 90px max(18px,env(safe-area-inset-left,0px)); overflow-x:hidden; min-height:100vh; }
+a { color:var(--ink); text-decoration-color:var(--accent); text-underline-offset:4px; }
+a:hover { color:var(--accent); }
+:focus-visible { outline:2px solid var(--accent); outline-offset:3px; border-radius:6px; }
+.glow { position:fixed; border-radius:50%; filter:blur(130px); z-index:-1; pointer-events:none; opacity:.28; }
+.g1 { width:640px; height:640px; left:-240px; top:-200px; background:#FF4FD0; }
+.g2 { width:600px; height:600px; right:-260px; bottom:60px; background:#4B5BFF; opacity:.24; }
+.wrap { max-width:1000px; margin:0 auto; position:relative; }
+header { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:22px 0; flex-wrap:wrap; }
+.brand { display:flex; align-items:center; gap:10px; font:700 1.2rem/1 var(--font); text-decoration:none; }
+.brand img { height:34px; width:auto; mix-blend-mode:screen; }
+.brand small { font:500 .75rem/1 var(--font); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); border:1px solid var(--line); border-radius:99px; padding:5px 9px; margin-left:4px; }
+.me { display:flex; align-items:center; gap:10px; font-size:.92rem; color:var(--muted); }
+.me img { width:30px; height:30px; border-radius:50%; }
+button, .btn { font:600 .92rem/1 var(--font); cursor:pointer; border-radius:99px; border:1px solid var(--line); background:var(--soft); color:var(--ink); padding:12px 18px; min-height:44px; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; }
+button:hover, .btn:hover { border-color:var(--accent); color:var(--ink); }
+.primary { background:linear-gradient(100deg,#FF5CD1,#6B5BFF 60%,#3DB8FF); border:0; color:#fff; box-shadow:0 8px 34px rgba(150,80,255,.4); font-weight:700; }
+.danger { border-color:rgba(255,120,140,.55); color:var(--rose); }
+button[disabled] { opacity:.5; cursor:not-allowed; }
+h1 { font:800 clamp(2rem,6vw,3rem)/1.05 var(--font); letter-spacing:-.03em; margin:8px 0 10px; }
+h2 { font:700 1.25rem/1.2 var(--font); margin:0 0 14px; }
+.muted { color:var(--muted); }
+.card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); }
+.banner { border:1px solid var(--line); border-radius:14px; padding:12px 16px; margin:0 0 18px; background:var(--soft); }
+.banner.err { border-color:rgba(255,120,140,.55); background:rgba(255,90,120,.1); }
+.banner.ok { border-color:rgba(110,231,168,.5); background:rgba(110,231,168,.08); }
+.hero { padding:36px 0 20px; max-width:38em; } .hero p { font-size:1.08rem; color:var(--muted); }
+.big { display:flex; align-items:center; gap:16px; padding:26px; }
+.dot { width:18px; height:18px; border-radius:50%; background:var(--faint); flex:none; }
+.dot.up { background:var(--ok); box-shadow:0 0 0 6px rgba(110,231,168,.18); } .dot.down { background:#ff5a78; box-shadow:0 0 0 6px rgba(255,90,120,.2); }
+.big b { font:800 1.5rem/1.2 var(--font); display:block; } .big span { color:var(--muted); }
+.bars { display:flex; gap:4px; margin-top:18px; height:34px; align-items:stretch; } .bars i { flex:1; border-radius:4px; background:var(--soft); }
+.bars i.up { background:var(--ok); } .bars i.down { background:#ff5a78; }
+.grid { display:grid; gap:14px; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); margin-top:16px; }
+.grid .card b { display:block; font:800 1.6rem/1.1 var(--font); } .grid .card span { color:var(--muted); font-size:.88rem; }
+.card + .card { margin-top:14px; } .grid .card + .card { margin-top:0; }
+.note { color:var(--faint); font-size:.86rem; margin-top:18px; }
+@media (prefers-reduced-motion:no-preference){ .dot.up { animation:pulse 2s ease-in-out infinite; } @keyframes pulse { 50% { box-shadow:0 0 0 10px rgba(110,231,168,.05); } } }
+</style>
+</head>
+<body>
+<div class="glow g1"></div><div class="glow g2"></div>
+<div class="wrap">
+<header><a class="brand" href="/"><img src="data:image/webp;base64,UklGRgACAABXRUJQVlA4IPQBAADQCwCdASpAAEAAPrVQoUwnJKMiLBVaaOAWiWoAzxvjKT/AYrnAj24HmA3JnJa1/e5JX2rszLsGOpIHF6QxpJtdHXmEFXJJlDPVi3wt+YESGVp0I2+i0IHKp4bS26sT1lrbVfe2w2lAAP78URfdJqHsDpmn9cTv4xFXtuFpzsc5beA9297WPfi+tYckcCPGUyvJMi8oV4IuRwf3c1WlCIgOyPSuUsyovoenYxw17p6ziUeQaI+SN4UHmC/YQI6/8IUYlgQGvGuVRH0M33DTVd/irzGVGVWtAMYu95ez2UBdIc84pYWingaYCP6hsTtA5kmSGJ9vCZefCzf3jwi/tSXXZri/FysNzgsrldK4wR/xUQQOnXyaYVDsYyENi9knXZ3/ds9PTVzk0vn6sNxVO1uiE9QzU1SQdh1a5cNLU5KB1LlH/tVePMru8l7Kx7DhPWDoVF1IWBiRyPaZN7k2NpN32RCn/AgeKTjFojzQBoYndG4kUG4lK6mWkOa59Refz3/Th70VVHfK8+9nERuEkeDYF+DZSqEMu1DyFGiu0IVPc2FvXPyT015DXzlXuyDgqGjCEMeT1+qFN/+TgwRgbA/cFb7qiW5M5WmD6yRFz8+2x3Hd3Ht449z5HGx0Rw827ozaW12mpyH/mMt1ShKpfgAuzUAAAA==" alt=""> Spectre <small>Status</small></a><a class="btn" href="/">Back to the site</a></header>
+<main>
+<section class="hero"><h1>Spectre status</h1><p>Is Spectre's web server answering right now? This page checks it live from your browser, every 30 seconds.</p></section>
+<section class="card big" aria-live="polite"><span class="dot" id="dot"></span><div><b id="head">Checking…</b><span id="sub">Contacting api.spectrebot.org</span></div></section>
+<div class="card"><b>Checks since you opened this page</b><div class="bars" id="bars" aria-hidden="true"></div></div>
+<div class="grid"><div class="card"><b id="ms">-</b><span>Response time</span></div><div class="card"><b id="up">-</b><span>Checks that passed</span></div><div class="card"><b id="last">-</b><span>Last checked</span></div></div>
+<p class="note">This only tests the website's API and dashboard. If the bot itself seems slow in Discord, check Discord's own status too. Something wrong? <a href="support.html">Open a ticket</a>.</p>
+</main>
+</div>
+<script>
+(() => {
+  const API = "https://api.spectrebot.org", $ = (id) => document.getElementById(id);
+  const hist = []; let pass = 0;
+  async function check() {
+    const t0 = performance.now(); let ok = false, ms = null;
+    try { const r = await fetch(API + "/health", { cache: "no-store" }); const j = await r.json(); ms = Math.round(performance.now() - t0); ok = r.ok && j.ok; } catch (e) { ok = false; }
+    hist.push(ok); if (hist.length > 30) hist.shift(); if (ok) pass++;
+    $("dot").className = "dot " + (ok ? "up" : "down");
+    $("head").textContent = ok ? "All good: Spectre is up" : "Spectre isn't answering";
+    $("sub").textContent = ok ? "The web server replied normally." : "The web server didn't reply. It may be restarting. Try again in a minute.";
+    $("ms").textContent = ok ? ms + " ms" : "-"; $("up").textContent = pass + " of " + hist.length;
+    $("last").textContent = new Date().toLocaleTimeString();
+    $("bars").replaceChildren(...hist.map((v) => { const i = document.createElement("i"); i.className = v ? "up" : "down"; return i; }));
+    document.title = (ok ? "Up" : "Down") + " | Spectre status";
+  }
+  check(); setInterval(check, 30000);
+})();
+</script>
+</body>
+</html>
