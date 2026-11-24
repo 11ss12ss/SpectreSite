@@ -134,7 +134,15 @@ form.unlock input { font-family:var(--mono); letter-spacing:.04em; }
 .pill.answered { color:var(--cyan); border-color:rgba(95,227,240,.5); }
 .pill.closed { color:var(--ok); border-color:rgba(110,231,168,.5); }
 .pill.tkopen { color:var(--warn); border-color:rgba(255,200,87,.5); }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior:auto !important; } .sk, .rise { animation:none !important; } }
+.pill.urgent { color:#fff; background:#e5384f; border-color:#ff6b81; animation:alarm 1.1s ease-in-out infinite; }
+.pill.high { color:#1a1203; background:var(--warn); border-color:var(--warn); }
+.pill.wait { border-color:rgba(255,107,129,.6); color:var(--rose); text-transform:none; letter-spacing:.02em; }
+.card.urgent { border-color:rgba(255,107,129,.7); box-shadow:0 0 0 1px rgba(255,107,129,.35), 0 0 28px rgba(229,56,79,.28); }
+.card.high { border-color:rgba(255,200,87,.55); }
+.urgentbar { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:0 0 14px; padding:14px 16px; border-radius:14px; background:rgba(229,56,79,.14); border:1px solid rgba(255,107,129,.7); color:#ffd6dc; font-weight:700; animation:alarm 1.1s ease-in-out infinite; }
+.urgentbar .ub { margin-left:auto; display:flex; gap:8px; }
+@keyframes alarm { 50% { box-shadow:0 0 0 4px rgba(229,56,79,.35); } }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior:auto !important; } .sk, .rise, .pill.urgent, .urgentbar { animation:none !important; } }
 </style>
 </head>
 <body>
@@ -174,6 +182,11 @@ function ago(ts) {
   const s = Math.max(0, Date.now() / 1000 - ts);
   if (s < 90) return "just now"; if (s < 3600) return Math.round(s / 60) + " min ago"; if (s < 86400) return Math.round(s / 3600) + " h ago";
   return Math.round(s / 86400) + " d ago";
+}
+function urgency(kind, open) { if (!open) return null; return kind === "raid" || kind === "server" ? "urgent" : kind === "bug" || kind === "appeal" ? "high" : null; }
+function urgentPills(level, ts) {
+  if (!level) return [];
+  return [h("span", { class: "pill " + level }, level === "urgent" ? "Urgent" : "High priority"), h("span", { class: "pill wait" }, "Waiting " + ago(ts).replace(" ago", ""))];
 }
 function dur(s) { const d = Math.floor(s / 86400), hh = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d ? d + "d " + hh + "h" : hh ? hh + "h " + m + "m" : m + "m"; }
 function num(n) { return n == null ? "-" : Number(n).toLocaleString(); }
@@ -338,7 +351,10 @@ async function tabOverview(body) {
       const s = await api("/api/dev/status"); openCount = s.feedback_open; ticketCount = s.tickets_open; badge();
       const card = (v, l) => h("div", { class: "card stat" + (first ? " rise" : "") }, h("b", null, v), h("span", null, l));
       const refresh = h("button", { onclick: (e) => busy(e.currentTarget, () => load()) }, "Refresh now");
+      const jump = (id) => () => { tab = id; viewConsole(); };
       body.replaceChildren(
+        s.urgent_open ? h("div", { class: "urgentbar", role: "alert" }, "\uD83D\uDEA8 " + s.urgent_open + (s.urgent_open === 1 ? " urgent item needs" : " urgent items need") + " you now",
+          h("span", { class: "ub" }, h("button", { onclick: jump("feedback") }, "Reports"), h("button", { onclick: jump("tickets") }, "Tickets"))) : null,
         h("div", { class: "stats" }, card(num(s.servers), "Servers"), card(num(s.members), "Members reached"),
           card(s.latency_ms == null ? "-" : s.latency_ms + " ms", "Discord latency"), card(dur(s.uptime_s), "Uptime"),
           card(num(s.feedback_open), "Open reports"), card(num(s.tickets_open), "Tickets to answer"), card(num(s.blocked), "Blocked servers")),
@@ -374,8 +390,9 @@ async function tabFeedback(body) {
   function card(f) {
     const label = { bug: "Bug report", raid: "Raid report", suggestion: "Suggestion" }[f.kind] || f.kind;
     const arm = deleteArm === f.id;
-    return h("article", { class: "card item rise" },
-      h("div", { class: "top" }, h("span", { class: "pill " + f.kind }, label), f.status === "done" ? h("span", { class: "pill done" }, "Done") : null,
+    const lvl = urgency(f.kind, f.status !== "done");
+    return h("article", { class: "card item rise" + (lvl ? " " + lvl : "") },
+      h("div", { class: "top" }, ...urgentPills(lvl, f.at), h("span", { class: "pill " + f.kind }, label), f.status === "done" ? h("span", { class: "pill done" }, "Done") : null,
         h("span", { class: "when", title: new Date(f.at * 1000).toLocaleString() }, ago(f.at))),
       h("p", null, f.message),
       (f.where || f.contact) ? h("dl", null, f.where ? h("div", null, h("dt", null, f.kind === "raid" ? "Server" : "Where"), h("dd", null, f.where)) : null,
@@ -424,8 +441,9 @@ async function tabTickets(body) {
     const setStatus = (st) => (e) => busy(e.currentTarget, () => act(async () => {
       await api("/api/dev/tickets/" + encodeURIComponent(t.ref) + "/status", { method: "POST", body: JSON.stringify({ status: st }) }); t.status = st; recount(); draw();
     }));
-    return h("article", { class: "card item rise" },
-      h("div", { class: "top" }, h("b", { class: "mono" }, "T-" + t.ref), h("span", { class: "pill " + (t.status === "open" ? "tkopen" : t.status) }, { open: "Needs reply", answered: "Answered", closed: "Closed" }[t.status] || t.status),
+    const lvl = urgency(t.category, t.status === "open");
+    return h("article", { class: "card item rise" + (lvl ? " " + lvl : "") },
+      h("div", { class: "top" }, ...urgentPills(lvl, t.updated), h("b", { class: "mono" }, "T-" + t.ref), h("span", { class: "pill " + (t.status === "open" ? "tkopen" : t.status) }, { open: "Needs reply", answered: "Answered", closed: "Closed" }[t.status] || t.status),
         h("span", { class: "pill" }, cats[t.category] || "Other"), h("span", { class: "when", title: new Date(t.updated * 1000).toLocaleString() }, ago(t.updated))),
       h("h3", null, t.subject),
       t.contact ? h("dl", null, h("div", null, h("dt", null, "Contact"), h("dd", null, t.contact))) : null,
