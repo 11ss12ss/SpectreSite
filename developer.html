@@ -105,6 +105,25 @@ button.busy::after { content:""; position:absolute; inset:0; margin:auto; width:
 .tools .card b { display:block; margin-bottom:2px; } .tools .card > span { color:var(--muted); font-size:.88rem; display:block; margin-bottom:12px; }
 .tools .card button { min-height:40px; padding:9px 16px; font-size:.88rem; }
 .stamp { color:var(--faint); font-size:.85rem; }
+.gate { max-width:44em; }
+.rooms { display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px; margin:0 0 26px; }
+.room { border:1px solid var(--line); border-radius:16px; padding:14px; background:var(--card); }
+.room-h { display:flex; align-items:baseline; gap:10px; margin:0 0 10px; }
+.room-h small { color:var(--faint); letter-spacing:.12em; text-transform:uppercase; font-size:.72rem; font-weight:600; }
+.locks { display:grid; gap:8px; }
+.lock { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:12px; border:1px solid var(--line); color:var(--faint); font-size:.9rem; font-weight:500; }
+.lock.active { color:var(--ink); border-color:var(--accent); background:rgba(255,92,209,.1); }
+.lock.done { color:var(--ok); border-color:rgba(110,231,168,.45); }
+.lk { position:relative; flex:none; width:18px; height:13px; margin-top:7px; border-radius:3px; background:currentColor; }
+.lk::before { content:""; position:absolute; left:3px; top:-8px; width:8px; height:8px; border:3px solid currentColor; border-bottom:0; border-radius:8px 8px 0 0; transition:transform .35s ease, top .35s ease; transform-origin:left bottom; }
+.lock.done .lk::before { top:-11px; transform:translateX(3px) rotate(28deg); }
+.sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+form.unlock.stack { flex-direction:column; align-items:stretch; max-width:28em; }
+form.unlock.stack input { flex:none; }
+form.unlock input { font-family:var(--mono); letter-spacing:.04em; }
+.shake { animation:shake .35s linear; }
+@keyframes shake { 20%{transform:translateX(-7px)} 40%{transform:translateX(6px)} 60%{transform:translateX(-4px)} 80%{transform:translateX(3px)} }
+@media (prefers-reduced-motion: reduce) { .shake { animation:none; } .lk::before { transition:none; } }
 .thread { display:grid; gap:10px; margin:10px 0 14px; }
 .msg { max-width:92%; padding:10px 13px; border-radius:14px; border:1px solid var(--line); background:var(--soft); white-space:pre-wrap; overflow-wrap:anywhere; font-size:.95rem; }
 .msg.staff { justify-self:end; border-color:rgba(255,92,209,.4); background:rgba(255,92,209,.08); }
@@ -193,28 +212,99 @@ function showMe() {
 }
 async function logout() { try { await api("/api/logout", { method: "POST", body: "{}" }); } catch (e) {} me = null; clearInterval(statusTimer); showMe(); viewLogin(); }
 
+// ---- The staff gate: two rooms, two locks each. The server keeps the progress and checks every step.
+const LOCKS = [["1", "Discord login"], ["2", "Passphrase"], ["3", "DM code"], ["4", "Your Discord ID"]];
+const ROOMS = [["Room 1", "The Door", [0, 1]], ["Room 2", "The Vault", [2, 3]]];
+function track(active) {
+  return h("div", { class: "rooms", role: "list", "aria-label": "Staff gate progress" }, ROOMS.map(([name, title, idx]) =>
+    h("div", { class: "room", role: "listitem" }, h("div", { class: "room-h" }, h("small", null, name), h("b", null, title)),
+      h("div", { class: "locks" }, idx.map((i) => {
+        const st = i + 1 < active ? "done" : i + 1 === active ? "active" : "todo";
+        return h("div", { class: "lock " + st, "aria-current": st === "active" ? "step" : null }, h("span", { class: "lk", "aria-hidden": "true" }), h("span", null, LOCKS[i][1]),
+          h("span", { class: "sr" }, st === "done" ? " (open)" : st === "active" ? " (current)" : " (locked)"));
+      })))));
+}
+function gateShell(msg, active, title, intro, body) {
+  setApp(msg, h("section", { class: "hero rise gate" }, track(active), h("h1", null, title), h("p", null, intro), body));
+}
+function shake(el) { el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); }
 function viewLogin(msg) {
-  setApp(msg, h("section", { class: "hero rise" }, h("h1", null, "For Spectre's developers."),
-    h("p", null, "A private console for the people who run Spectre: bot status, the feedback and raid-report inbox, support tickets, every server it's in, and quick links."),
-    h("p", null, h("a", { class: "btn primary", href: API + "/auth/login?next=developer" }, "Log in with Discord"))));
+  gateShell(msg, 1, "For Spectre's developers.",
+    "This is a private console, locked behind two rooms with two locks each. Start at the door: log in with the Discord account that is on the developer list.",
+    h("p", null, h("a", { class: "btn primary", href: API + "/auth/login?next=developer" }, "Log in with Discord")));
 }
 function viewNotOwner() {
   setApp(h("section", { class: "hero rise" }, h("h1", null, "This page is for Spectre's developers."),
     h("p", null, "Your Discord account isn't on the developer list. If you manage a server with Spectre, the dashboard is where you want to be."),
     h("p", null, h("a", { class: "btn primary", href: "dashboard.html" }, "Open the dashboard"))));
 }
-function viewUnlock(msg) {
-  const input = h("input", { type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "Your Discord user ID", "aria-label": "Your Discord user ID" });
-  const go = h("button", { class: "primary", type: "submit" }, "Unlock");
-  const form = h("form", { class: "unlock", onsubmit: (e) => {
+async function gateFlow(msg) {
+  let g;
+  try { g = await api("/api/dev/gate"); }
+  catch (ex) { if (ex.status === 401) { me = null; showMe(); return viewLogin(banner("err", "Your session ended. Log in again.")); }
+    if (ex.status === 403) return viewNotOwner();
+    return setApp(msg, banner("err", ex.message), h("p", null, h("button", { onclick: (e) => busy(e.currentTarget, () => gateFlow()) }, "Try again"))); }
+  if (g.unlocked) return viewConsole();
+  if (!g.room1) return lockPassphrase(msg, g.passphrase_set);
+  if (!g.code_ok) return lockCode(msg, g.code_sent);
+  return lockId(msg);
+}
+const viewUnlock = (msg) => gateFlow(msg);
+function answer(form, go, call, msg, again) {
+  form.addEventListener("submit", (e) => {
     e.preventDefault();
     busy(go, async () => {
-      try { await api("/api/dev/unlock", { method: "POST", body: JSON.stringify({ owner_id: input.value.trim() }) }); viewConsole(); }
-      catch (ex) { viewUnlock(banner("err", ex.status === 401 ? "Your session ended. Log in again." : ex.message)); }
+      try { await call(); }
+      catch (ex) {
+        if (ex.status === 401) { me = null; showMe(); return viewLogin(banner("err", "Your session ended. Log in again.")); }
+        const note = banner("err", ex.message); shake(form);
+        if (ex.status === 410 || ex.status === 429 || ex.status === 403 && /locked/i.test(ex.message)) return gateFlow(note);
+        form.parentNode.querySelector(".gnote")?.remove(); form.before(Object.assign(note, { className: note.className + " gnote" }));
+        again && again();
+      }
     });
-  } }, input, go);
-  setApp(msg, h("section", { class: "hero rise" }, h("h1", null, "Developer Mode"),
-    h("p", null, "Type your own Discord user ID to unlock the console. It locks again after 15 minutes."), form));
+  });
+}
+function lockPassphrase(msg, isSet) {
+  const first = !isSet;
+  const pw = h("input", { type: "password", autocomplete: first ? "new-password" : "current-password", placeholder: first ? "Choose a passphrase (12+ characters)" : "Staff passphrase", "aria-label": "Staff passphrase", maxlength: "128" });
+  const pw2 = first ? h("input", { type: "password", autocomplete: "new-password", placeholder: "Type it again", "aria-label": "Confirm passphrase", maxlength: "128" }) : null;
+  const go = h("button", { class: "primary", type: "submit" }, first ? "Set passphrase" : "Open the door");
+  const form = h("form", { class: "unlock stack" }, pw, pw2, go);
+  answer(form, go, async () => { await api("/api/dev/gate/passphrase", { method: "POST", body: JSON.stringify({ passphrase: pw.value, confirm: pw2 ? pw2.value : undefined }) }); gateFlow(); });
+  gateShell(msg, 2, first ? "Choose your passphrase" : "Lock 2: the passphrase",
+    first ? "No staff passphrase exists yet. Pick a long one that only you know. Spectre stores only a salted hash of it, and you'll need it every hour."
+          : "You're in as a developer. Now give the passphrase to open the door. Five wrong answers in 15 minutes lock the gate for 30 minutes.", form);
+  pw.focus();
+}
+function lockCode(msg, sent) {
+  let timer = null;
+  const code = h("input", { type: "text", inputmode: "numeric", pattern: "[0-9]*", maxlength: "6", autocomplete: "one-time-code", placeholder: "6-digit code", "aria-label": "Code from your DMs" });
+  const go = h("button", { class: "primary", type: "submit" }, "Open the vault");
+  const left = h("span", { class: "stamp" });
+  const form = h("form", { class: "unlock", hidden: !sent }, code, go);
+  const send = h("button", { type: "button", onclick: (e) => busy(e.currentTarget, async () => {
+    try { const r = await api("/api/dev/gate/code/request", { method: "POST", body: "{}" }); form.hidden = false; send.textContent = "Send a new code"; countdown(r.seconds); code.focus(); }
+    catch (ex) { if (ex.status === 401) { me = null; showMe(); return viewLogin(banner("err", "Your session ended. Log in again.")); } gateFlow(banner("err", ex.message)); }
+  }) }, sent ? "Send a new code" : "Send me a code");
+  function countdown(sec) {
+    clearInterval(timer); let t = sec;
+    const tick = () => { left.textContent = t > 0 ? "Code expires in " + Math.floor(t / 60) + ":" + String(t % 60).padStart(2, "0") : "That code expired. Send a new one."; if (t-- <= 0) clearInterval(timer); };
+    tick(); timer = setInterval(tick, 1000);
+  }
+  answer(form, go, async () => { await api("/api/dev/gate/code", { method: "POST", body: JSON.stringify({ code: code.value.trim() }) }); clearInterval(timer); gateFlow(); }, () => code.select());
+  gateShell(msg, 3, "Lock 3: the DM code",
+    "The door is open. The vault wants proof that you control this Discord account: the bot DMs you a code that works once and lasts five minutes.",
+    h("div", null, h("p", { class: "row" }, send, left), form));
+  if (sent) { left.textContent = "A code was sent. It lasts five minutes."; code.focus(); }
+}
+function lockId(msg) {
+  const input = h("input", { type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "Your Discord user ID", "aria-label": "Your Discord user ID" });
+  const go = h("button", { class: "primary", type: "submit" }, "Unlock");
+  const form = h("form", { class: "unlock" }, input, go);
+  answer(form, go, async () => { await api("/api/dev/unlock", { method: "POST", body: JSON.stringify({ owner_id: input.value.trim() }) }); viewConsole(); }, () => input.select());
+  gateShell(msg, 4, "Lock 4: say who you are",
+    "Last lock. Type your own Discord user ID. Developer Mode then stays open for 15 minutes, and only from the network you unlocked it on.", form);
   input.focus();
 }
 
