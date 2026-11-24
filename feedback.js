@@ -11,8 +11,8 @@
     ".fb-in{padding:26px 26px 24px;font:400 1rem/1.5 var(--body)}",
     ".fb-in h2{margin:0 0 4px;font:800 1.5rem/1.2 var(--display);letter-spacing:-.02em}",
     ".fb-in p.fb-sub{margin:0 0 18px;color:var(--muted);font-size:.95rem}",
-    ".fb-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:5px;margin:0 0 16px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}",
-    ".fb-tabs label{position:relative;display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:10px;color:var(--muted);font-weight:600;font-size:.95rem;cursor:pointer}",
+    ".fb-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:5px;margin:0 0 16px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}",
+    ".fb-tabs label{position:relative;display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:10px;color:var(--muted);font-weight:600;font-size:.9rem;text-align:center;cursor:pointer}",
     ".fb-tabs input{position:absolute;opacity:0;inset:0;cursor:pointer}",
     ".fb-tabs label:has(input:checked){background:linear-gradient(100deg,#FF5CD1,#6B5BFF 60%,#3DB8FF);color:#fff}",
     ".fb-tabs label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}",
@@ -49,14 +49,15 @@
   dlg.innerHTML =
     '<form class="fb-in" novalidate>' +
     '<h2 id="fb-title">Send feedback</h2>' +
-    '<p class="fb-sub">Got an idea or found something broken? It goes straight to the Spectre team.</p>' +
+    '<p class="fb-sub">Got an idea, found a bug, or been raided? It goes straight to the Spectre team.</p>' +
     '<div class="fb-tabs" role="radiogroup" aria-label="Type">' +
     '<label><input type="radio" name="kind" value="suggestion" checked>Suggestion</label>' +
-    '<label><input type="radio" name="kind" value="bug">Bug report</label></div>' +
+    '<label><input type="radio" name="kind" value="bug">Bug report</label>' +
+    '<label><input type="radio" name="kind" value="raid">Raid report</label></div>' +
     '<label class="fb-l" for="fb-msg" id="fb-msg-l">Your suggestion</label>' +
     '<textarea id="fb-msg" name="message" maxlength="1500" required></textarea>' +
     '<div class="fb-count" id="fb-count" aria-hidden="true">0 / 1500</div>' +
-    '<div id="fb-where-wrap" hidden><label class="fb-l" for="fb-where">Where did it happen? <span>(optional)</span></label>' +
+    '<div id="fb-where-wrap" hidden><label class="fb-l" for="fb-where" id="fb-where-l">Where did it happen? <span>(optional)</span></label>' +
     '<input type="text" id="fb-where" name="where" maxlength="100" placeholder="A command, the dashboard, this website..."></div>' +
     '<label class="fb-l" for="fb-contact">Discord name or email <span>(optional, only if you want a reply)</span></label>' +
     '<input type="text" id="fb-contact" name="contact" maxlength="100" autocomplete="off">' +
@@ -71,15 +72,18 @@
 
   function kind() { return form.querySelector("input[name=kind]:checked").value; }
   function sync() {
-    var bug = kind() === "bug";
-    dlg.querySelector("#fb-msg-l").textContent = bug ? "What went wrong?" : "Your suggestion";
-    msg.placeholder = bug ? "What did you do, what did you expect, and what happened instead?" : "What would make Spectre better?";
-    dlg.querySelector("#fb-where-wrap").hidden = !bug;
+    var k = kind(), raid = k === "raid";
+    dlg.querySelector("#fb-msg-l").textContent = raid ? "What happened?" : k === "bug" ? "What went wrong?" : "Your suggestion";
+    msg.placeholder = raid ? "What did the raiders do, and when? Include usernames or IDs if you have them." :
+      k === "bug" ? "What did you do, what did you expect, and what happened instead?" : "What would make Spectre better?";
+    dlg.querySelector("#fb-where-wrap").hidden = k === "suggestion";
+    dlg.querySelector("#fb-where-l").innerHTML = raid ? "Server name or ID <span>(optional)</span>" : "Where did it happen? <span>(optional)</span>";
+    dlg.querySelector("#fb-where").placeholder = raid ? "The server that was raided" : "A command, the dashboard, this website...";
     dlg.querySelector("#fb-count").textContent = msg.value.length + " / 1500";
   }
   function open(k) {
     if (!form.isConnected || !form.querySelector("#fb-msg")) { form = rebuild(); }
-    form.querySelector("input[name=kind][value=" + (k === "bug" ? "bug" : "suggestion") + "]").checked = true;
+    form.querySelector("input[name=kind][value=" + (k === "bug" || k === "raid" ? k : "suggestion") + "]").checked = true;
     err.textContent = ""; sync();
     if (!dlg.open) dlg.showModal();
     msg.focus();
@@ -105,7 +109,7 @@
       .then(function (res) {
         if (!res.ok) throw new Error(res.d.error || "Something went wrong. Please try again.");
         dlg.innerHTML = '<div class="fb-in fb-done">' + CHECK + '<h2>Thank you!</h2><p class="fb-sub">Your ' +
-          (body.kind === "bug" ? "bug report" : "suggestion") + ' was sent.</p>' +
+          ({ bug: "bug report", raid: "raid report" }[body.kind] || "suggestion") + ' was sent.</p>' +
           '<div class="fb-row" style="justify-content:center"><button type="button" class="fb-btn fb-go" id="fb-close">Close</button></div></div>';
         dlg.querySelector("#fb-close").addEventListener("click", function () { dlg.close(); }); dlg.querySelector("#fb-close").focus();
       })
