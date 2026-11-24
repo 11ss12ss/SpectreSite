@@ -36,6 +36,14 @@ button, .btn { font:600 .92rem/1 var(--font); cursor:pointer; border-radius:99px
 button:hover, .btn:hover { border-color:var(--accent); color:var(--ink); }
 .primary { background:linear-gradient(100deg,#FF5CD1,#6B5BFF 60%,#3DB8FF); border:0; color:#fff; box-shadow:0 8px 34px rgba(150,80,255,.4); font-weight:700; }
 .primary:hover { filter:brightness(1.1); }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%,100% { opacity:.45; } 50% { opacity:1; } }
+.spinner { display:inline-block; width:.95em; height:.95em; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-.12em; margin-right:.55em; }
+.skel { animation:pulse 1.4s ease-in-out infinite; }
+.skel::before { content:""; display:inline-block; width:.95em; height:.95em; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-.12em; margin-right:.55em; }
+button.busy { cursor:progress; opacity:.85; }
+.errcode { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.85em; opacity:.8; white-space:nowrap; }
+@media (prefers-reduced-motion: reduce) { .spinner,.skel,.skel::before { animation-duration:2.5s; } }
 button[disabled] { opacity:.45; cursor:not-allowed; }
 h1 { font:800 clamp(2rem,6vw,3rem)/1.05 var(--font); letter-spacing:-.03em; margin:8px 0 10px; }
 h2 { font:700 1.25rem/1.2 var(--font); margin:0 0 14px; letter-spacing:-.01em; }
@@ -156,9 +164,9 @@ async function api(path, opt = {}) {
   let r;
   try {
     r = await fetch(API + path, { credentials: "include", ...opt, headers: opt.body ? { "Content-Type": "application/json" } : {} });
-  } catch (e) { throw { status: 0, message: "Can't reach the dashboard server right now." }; }
+  } catch (e) { throw { status: 0, code: "E-NET", message: "Can't reach the dashboard server right now. (E-NET)" }; }
   let j = {}; try { j = await r.json(); } catch (e) {}
-  if (!r.ok) throw { status: r.status, message: j.error || "Something went wrong." };
+  if (!r.ok) { const code = "E-" + r.status; throw { status: r.status, code, message: (j.error || "Something went wrong.") + " (" + code + ")" }; }
   return j;
 }
 
@@ -252,9 +260,11 @@ function renderBilling(box) {
   const mk = (label, path, extra, cls) => {
     const b = h("button", { class: cls || "", type: "button" }, label);
     b.onclick = async () => {
-      if (b.disabled) return; b.disabled = true; note.textContent = "Opening secure checkout…";
-      try { const j = await api(path, { method: "POST", body: JSON.stringify({ guild_id: id, ...extra }) }); location.href = j.url; }
-      catch (e) { note.textContent = e.message; b.disabled = false; }
+      if (b.disabled) return; b.disabled = true; b.classList.add("busy"); b.textContent = ""; b.append(h("span", { class: "spinner", "aria-hidden": "true" }), "Please wait…");
+      note.textContent = "Opening secure checkout…";
+      const reset = () => { b.disabled = false; b.classList.remove("busy"); b.textContent = label; };
+      try { const j = await api(path, { method: "POST", body: JSON.stringify({ guild_id: id, ...extra }) }); if (!j.url) throw { code: "E-NOURL", message: "Stripe didn't return a checkout link. (E-NOURL)" }; note.textContent = "Redirecting to Stripe…"; location.href = j.url; }
+      catch (e) { note.textContent = e.message || "Something went wrong. (E-UNKNOWN)"; reset(); }
     };
     return b;
   };
