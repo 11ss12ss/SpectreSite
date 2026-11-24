@@ -74,13 +74,38 @@ h2 { font:700 1.25rem/1.2 var(--font); margin:0 0 14px; }
 .sv b { display:block; overflow-wrap:anywhere; } .sv span { font-size:.85rem; color:var(--muted); }
 .sv .tag { margin-left:auto; }
 .tools { display:grid; gap:12px; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); }
-.tools a { display:block; text-decoration:none; padding:18px; border:1px solid var(--line); border-radius:16px; background:var(--card); }
-.tools a:hover { border-color:var(--accent); }
-.tools b { display:block; } .tools span { color:var(--muted); font-size:.88rem; }
+.tools > a { display:block; text-decoration:none; padding:18px; border:1px solid var(--line); border-radius:16px; background:var(--card); }
+.tools > a:hover { border-color:var(--accent); }
+.tools > a b { display:block; } .tools > a span { color:var(--muted); font-size:.88rem; }
 form.unlock { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
 form.unlock input { flex:1 1 220px; min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--ink); font:500 1rem var(--mono); }
 .empty { color:var(--muted); text-align:center; padding:34px 10px; }
-@media (prefers-reduced-motion: reduce) { * { scroll-behavior:auto !important; } }
+.sk { display:block; border-radius:10px; background:linear-gradient(90deg,rgba(190,175,255,.08) 25%,rgba(190,175,255,.2) 50%,rgba(190,175,255,.08) 75%); background-size:200% 100%; animation:shimmer 1.4s linear infinite; }
+@keyframes shimmer { to { background-position:-200% 0; } }
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes rise { from { opacity:0; transform:translateY(6px); } }
+.rise { animation:rise .28s ease-out both; }
+.spin { display:inline-block; width:18px; height:18px; border-radius:50%; border:2px solid var(--line); border-top-color:var(--accent); animation:spin .8s linear infinite; vertical-align:-3px; }
+.boot { display:flex; align-items:center; gap:12px; padding:60px 0; color:var(--muted); }
+button.busy { position:relative; color:transparent !important; pointer-events:none; }
+button.busy::after { content:""; position:absolute; inset:0; margin:auto; width:16px; height:16px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+.sk-card { display:grid; gap:10px; }
+.toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin:0 0 16px; }
+.toolbar input[type=search], .toolbar select { min-height:44px; padding:10px 14px; border-radius:12px; border:1px solid var(--line); background:rgba(255,255,255,.05); color:var(--ink); font:500 .95rem var(--font); }
+.toolbar input[type=search] { flex:1 1 200px; }
+.toolbar select option { background:#14102a; color:var(--ink); }
+.sv .acts { margin-left:auto; }
+.sv { flex-wrap:wrap; }
+.sv .info { flex:1 1 220px; min-width:0; }
+.tl { display:grid; gap:10px; }
+.tl .item p { margin:6px 0 0; }
+.out { margin:10px 0 0; font:500 .85rem/1.5 var(--mono); color:var(--muted); min-height:1.5em; }
+.out.ok { color:var(--ok); } .out.bad { color:var(--rose); }
+.tools .card { display:block; }
+.tools .card b { display:block; margin-bottom:2px; } .tools .card > span { color:var(--muted); font-size:.88rem; display:block; margin-bottom:12px; }
+.tools .card button { min-height:40px; padding:9px 16px; font-size:.88rem; }
+.stamp { color:var(--faint); font-size:.85rem; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior:auto !important; } .sk, .rise { animation:none !important; } }
 </style>
 </head>
 <body>
@@ -90,7 +115,7 @@ form.unlock input { flex:1 1 220px; min-height:44px; padding:10px 14px; border-r
     <a class="brand" href="index.html"><img src="data:image/webp;base64,UklGRgACAABXRUJQVlA4IPQBAADQCwCdASpAAEAAPrVQoUwnJKMiLBVaaOAWiWoAzxvjKT/AYrnAj24HmA3JnJa1/e5JX2rszLsGOpIHF6QxpJtdHXmEFXJJlDPVi3wt+YESGVp0I2+i0IHKp4bS26sT1lrbVfe2w2lAAP78URfdJqHsDpmn9cTv4xFXtuFpzsc5beA9297WPfi+tYckcCPGUyvJMi8oV4IuRwf3c1WlCIgOyPSuUsyovoenYxw17p6ziUeQaI+SN4UHmC/YQI6/8IUYlgQGvGuVRH0M33DTVd/irzGVGVWtAMYu95ez2UBdIc84pYWingaYCP6hsTtA5kmSGJ9vCZefCzf3jwi/tSXXZri/FysNzgsrldK4wR/xUQQOnXyaYVDsYyENi9knXZ3/ds9PTVzk0vn6sNxVO1uiE9QzU1SQdh1a5cNLU5KB1LlH/tVePMru8l7Kx7DhPWDoVF1IWBiRyPaZN7k2NpN32RCn/AgeKTjFojzQBoYndG4kUG4lK6mWkOa59Refz3/Th70VVHfK8+9nERuEkeDYF+DZSqEMu1DyFGiu0IVPc2FvXPyT015DXzlXuyDgqGjCEMeT1+qFN/+TgwRgbA/cFb7qiW5M5WmD6yRFz8+2x3Hd3Ht449z5HGx0Rw827ozaW12mpyH/mMt1ShKpfgAuzUAAAA==" alt="">Spectre<small>Developers</small></a>
     <div class="me" id="me" hidden></div>
   </header>
-  <main id="app" aria-live="polite"><p class="muted">Loading...</p></main>
+  <main id="app" aria-live="polite"><div class="boot"><span class="spin" aria-hidden="true"></span><span>Checking your login...</span></div></main>
 </div>
 <script>
 const API = "https://api.spectrebot.org";
@@ -124,6 +149,31 @@ function ago(ts) {
 function dur(s) { const d = Math.floor(s / 86400), hh = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60); return d ? d + "d " + hh + "h" : hh ? hh + "h " + m + "m" : m + "m"; }
 function num(n) { return n == null ? "-" : Number(n).toLocaleString(); }
 
+async function busy(btn, fn) {
+  if (btn.classList.contains("busy")) return;
+  btn.classList.add("busy"); btn.disabled = true;
+  try { return await fn(); } finally { btn.classList.remove("busy"); btn.disabled = false; }
+}
+function copyText(text, btn, label) {
+  const done = () => { const old = btn.textContent; btn.textContent = "Copied"; setTimeout(() => { btn.textContent = label || old; }, 1200); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => fallback());
+  else fallback();
+  function fallback() {
+    const t = h("textarea", { style: "position:fixed;left:-9999px" }); t.value = text; document.body.append(t); t.select();
+    try { document.execCommand("copy"); done(); } catch (e) { btn.textContent = "Press Ctrl+C"; } t.remove();
+  }
+}
+function csvDownload(name, rows) {
+  const cell = (v) => { let t = v == null ? "" : String(v); if (/^[=+\-@\t\r]/.test(t)) t = "'" + t; return '"' + t.replace(/"/g, '""') + '"'; };
+  const blob = new Blob(["﻿" + rows.map((r) => r.map(cell).join(",")).join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = h("a", { href: URL.createObjectURL(blob), download: name }); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const iso = (ts) => ts ? new Date(ts * 1000).toISOString() : "";
+const sk = (w, hgt) => h("span", { class: "sk", style: "width:" + w + ";height:" + hgt + "px" });
+const skStats = () => h("div", { class: "stats", "aria-busy": "true", "aria-label": "Loading" }, [0, 1, 2, 3, 4, 5].map(() => h("div", { class: "card stat sk-card" }, sk("55%", 30), sk("75%", 14))));
+const skItems = (n) => h("div", { class: "list", "aria-busy": "true", "aria-label": "Loading" }, Array.from({ length: n }, () => h("div", { class: "card sk-card" }, sk("90px", 18), sk("85%", 16), sk("60%", 16), sk("160px", 36))));
+const skRows = (n) => h("div", { class: "list", "aria-busy": "true", "aria-label": "Loading" }, Array.from({ length: n }, () => h("div", { class: "card sv" }, h("span", { class: "sk", style: "width:44px;height:44px;border-radius:13px" }), h("div", { class: "info sk-card" }, sk("40%", 16), sk("65%", 13)))));
+
 function showMe() {
   meBox.replaceChildren();
   if (!me) { meBox.hidden = true; return; }
@@ -134,59 +184,65 @@ function showMe() {
 async function logout() { try { await api("/api/logout", { method: "POST", body: "{}" }); } catch (e) {} me = null; clearInterval(statusTimer); showMe(); viewLogin(); }
 
 function viewLogin(msg) {
-  setApp(msg, h("section", { class: "hero" }, h("h1", null, "For Spectre's developers."),
+  setApp(msg, h("section", { class: "hero rise" }, h("h1", null, "For Spectre's developers."),
     h("p", null, "A private console for the people who run Spectre: bot status, the feedback and raid-report inbox, every server it's in, and quick links."),
     h("p", null, h("a", { class: "btn primary", href: API + "/auth/login?next=developer" }, "Log in with Discord"))));
 }
 function viewNotOwner() {
-  setApp(h("section", { class: "hero" }, h("h1", null, "This page is for Spectre's developers."),
+  setApp(h("section", { class: "hero rise" }, h("h1", null, "This page is for Spectre's developers."),
     h("p", null, "Your Discord account isn't on the developer list. If you manage a server with Spectre, the dashboard is where you want to be."),
     h("p", null, h("a", { class: "btn primary", href: "dashboard.html" }, "Open the dashboard"))));
 }
 function viewUnlock(msg) {
   const input = h("input", { type: "text", inputmode: "numeric", autocomplete: "off", placeholder: "Your Discord user ID", "aria-label": "Your Discord user ID" });
   const go = h("button", { class: "primary", type: "submit" }, "Unlock");
-  const form = h("form", { class: "unlock", onsubmit: async (e) => {
-    e.preventDefault(); go.disabled = true;
-    try { await api("/api/dev/unlock", { method: "POST", body: JSON.stringify({ owner_id: input.value.trim() }) }); viewConsole(); }
-    catch (ex) { go.disabled = false; viewUnlock(banner("err", ex.status === 401 ? "Your session ended. Log in again." : ex.message)); }
+  const form = h("form", { class: "unlock", onsubmit: (e) => {
+    e.preventDefault();
+    busy(go, async () => {
+      try { await api("/api/dev/unlock", { method: "POST", body: JSON.stringify({ owner_id: input.value.trim() }) }); viewConsole(); }
+      catch (ex) { viewUnlock(banner("err", ex.status === 401 ? "Your session ended. Log in again." : ex.message)); }
+    });
   } }, input, go);
-  setApp(msg, h("section", { class: "hero" }, h("h1", null, "Developer Mode"),
+  setApp(msg, h("section", { class: "hero rise" }, h("h1", null, "Developer Mode"),
     h("p", null, "Type your own Discord user ID to unlock the console. It locks again after 15 minutes."), form));
   input.focus();
 }
 
-const TABS = [["overview", "Overview"], ["feedback", "Feedback"], ["servers", "Servers"], ["tools", "Tools"]];
+const TABS = [["overview", "Overview"], ["feedback", "Feedback"], ["servers", "Servers"], ["activity", "Activity"], ["tools", "Tools"]];
 let openCount = null;
+function badge() {
+  const b = document.querySelectorAll(".tabs button")[1]; if (!b) return;
+  b.querySelector(".badge")?.remove(); if (openCount) b.append(h("span", { class: "badge", "aria-label": openCount + " open" }, openCount));
+}
 function viewConsole() {
   clearInterval(statusTimer);
-  const nav = h("div", { class: "tabs", role: "tablist" }, TABS.map(([id, label]) => {
-    const b = h("button", { role: "tab", "aria-selected": String(tab === id), onclick: () => { tab = id; deleteArm = null; viewConsole(); } }, label);
-    if (id === "feedback" && openCount) b.append(h("span", { class: "badge", "aria-label": openCount + " open" }, openCount));
-    return b;
-  }));
+  const nav = h("div", { class: "tabs", role: "tablist" }, TABS.map(([id, label]) =>
+    h("button", { role: "tab", "aria-selected": String(tab === id), onclick: () => { tab = id; deleteArm = null; viewConsole(); } }, label)));
   const body = h("div", { id: "body" });
-  setApp(nav, body);
-  ({ overview: tabOverview, feedback: tabFeedback, servers: tabServers, tools: tabTools })[tab](body);
+  setApp(nav, body); badge();
+  ({ overview: tabOverview, feedback: tabFeedback, servers: tabServers, activity: tabActivity, tools: tabTools })[tab](body);
 }
 function locked(ex, body) {
   if (ex.status === 403) { viewUnlock(banner("err", "Developer Mode is locked. Unlock it again.")); return true; }
   if (ex.status === 401) { me = null; showMe(); viewLogin(banner("err", "Your session ended. Log in again.")); return true; }
-  body.replaceChildren(banner("err", ex.message)); return false;
+  body.replaceChildren(banner("err", ex.message), h("p", null, h("button", { onclick: viewConsole }, "Try again"))); return false;
 }
 
 async function tabOverview(body) {
-  async function load() {
+  body.replaceChildren(skStats());
+  let first = true;
+  async function load(btn) {
     try {
-      const s = await api("/api/dev/status"); openCount = s.feedback_open;
-      const card = (v, l) => h("div", { class: "card stat" }, h("b", null, v), h("span", null, l));
+      const s = await api("/api/dev/status"); openCount = s.feedback_open; badge();
+      const card = (v, l) => h("div", { class: "card stat" + (first ? " rise" : "") }, h("b", null, v), h("span", null, l));
+      const refresh = h("button", { onclick: (e) => busy(e.currentTarget, () => load()) }, "Refresh now");
       body.replaceChildren(
         h("div", { class: "stats" }, card(num(s.servers), "Servers"), card(num(s.members), "Members reached"),
           card(s.latency_ms == null ? "-" : s.latency_ms + " ms", "Discord latency"), card(dur(s.uptime_s), "Uptime"),
           card(num(s.feedback_open), "Open reports"), card(num(s.blocked), "Blocked servers")),
-        h("p", { class: "meta" }, "Python " + s.python + " · discord.py " + s.discord_py + " · " + s.cogs + " modules loaded · refreshes every 30 seconds"));
-      document.querySelectorAll(".tabs .badge").forEach((n) => n.remove());
-      if (openCount) document.querySelectorAll(".tabs button")[1].append(h("span", { class: "badge" }, openCount));
+        h("div", { class: "row", style: "margin-top:16px" }, refresh, h("span", { class: "stamp" }, "Updated " + new Date().toLocaleTimeString() + " · refreshes every 30 seconds")),
+        h("p", { class: "meta" }, "Python " + s.python + " · discord.py " + s.discord_py + " · " + s.cogs + " modules loaded"));
+      first = false;
     } catch (ex) { clearInterval(statusTimer); locked(ex, body); }
   }
   await load(); statusTimer = setInterval(load, 30000);
@@ -195,61 +251,115 @@ async function tabOverview(body) {
 async function tabFeedback(body) {
   const kinds = [["all", "All"], ["suggestion", "Suggestions"], ["bug", "Bugs"], ["raid", "Raids"]];
   const states = [["open", "Open"], ["done", "Done"], ["all", "Everything"]];
+  body.replaceChildren(skItems(3));
   let items;
   try { items = (await api("/api/dev/feedback")).items; } catch (ex) { locked(ex, body); return; }
-  openCount = items.filter((f) => f.status !== "done").length;
+  openCount = items.filter((f) => f.status !== "done").length; badge();
   const list = h("div", { class: "list" });
-  const chips = (set, cur, key) => set.map(([id, label]) => h("button", { class: "chip", "aria-pressed": String(cur === id), onclick: () => { filt[key] = id; deleteArm = null; draw(); chipsRow(); } }, label));
+  let query = "";
+  const search = h("input", { type: "search", placeholder: "Search reports", "aria-label": "Search reports", oninput: (e) => { query = e.target.value.trim().toLowerCase(); draw(); } });
   const bar = h("div", { class: "row" });
+  const chips = (set, cur, key) => set.map(([id, label]) => h("button", { class: "chip", "aria-pressed": String(cur === id), onclick: () => { filt[key] = id; deleteArm = null; draw(); chipsRow(); } }, label));
   function chipsRow() { bar.replaceChildren(...chips(kinds, filt.kind, "kind"), h("span", { class: "muted" }, "·"), ...chips(states, filt.state, "state")); }
-  async function act(fn, item) { try { await fn(); } catch (ex) { if (locked(ex, body)) return; alert_(ex.message); } }
-  function alert_(m) { list.prepend(banner("err", m)); }
+  const visible = () => items.filter((f) => (filt.kind === "all" || f.kind === filt.kind) && (filt.state === "all" || f.status === filt.state)
+    && (!query || (f.message + " " + f.where + " " + f.contact).toLowerCase().includes(query)));
+  const exportBtn = h("button", { onclick: () => csvDownload("spectre-feedback.csv", [["id", "type", "status", "created_utc", "server_or_where", "contact", "message"],
+    ...visible().map((f) => [f.id, f.kind, f.status, iso(f.at), f.where, f.contact, f.message])]) }, "Export CSV");
   function draw() {
-    const shown = items.filter((f) => (filt.kind === "all" || f.kind === filt.kind) && (filt.state === "all" || f.status === filt.state));
+    const shown = visible();
     list.replaceChildren(...(shown.length ? shown.map(card) : [h("div", { class: "empty card" }, items.length ? "Nothing matches these filters." : "No reports yet. They show up here when someone uses the feedback form on the website.")]));
   }
   function card(f) {
     const label = { bug: "Bug report", raid: "Raid report", suggestion: "Suggestion" }[f.kind] || f.kind;
     const arm = deleteArm === f.id;
-    return h("article", { class: "card item" },
+    return h("article", { class: "card item rise" },
       h("div", { class: "top" }, h("span", { class: "pill " + f.kind }, label), f.status === "done" ? h("span", { class: "pill done" }, "Done") : null,
         h("span", { class: "when", title: new Date(f.at * 1000).toLocaleString() }, ago(f.at))),
       h("p", null, f.message),
       (f.where || f.contact) ? h("dl", null, f.where ? h("div", null, h("dt", null, f.kind === "raid" ? "Server" : "Where"), h("dd", null, f.where)) : null,
         f.contact ? h("div", null, h("dt", null, "Contact"), h("dd", null, f.contact)) : null) : null,
       h("div", { class: "acts" },
-        h("button", { onclick: () => act(async () => { const st = f.status === "done" ? "open" : "done"; await api("/api/dev/feedback/" + encodeURIComponent(f.id) + "/status", { method: "POST", body: JSON.stringify({ status: st }) }); f.status = st; openCount = items.filter((x) => x.status !== "done").length; draw(); }) }, f.status === "done" ? "Reopen" : "Mark done"),
-        h("button", { class: "danger", onclick: () => act(async () => {
+        h("button", { onclick: (e) => busy(e.currentTarget, () => act(async () => { const st = f.status === "done" ? "open" : "done"; await api("/api/dev/feedback/" + encodeURIComponent(f.id) + "/status", { method: "POST", body: JSON.stringify({ status: st }) }); f.status = st; openCount = items.filter((x) => x.status !== "done").length; badge(); draw(); })) }, f.status === "done" ? "Reopen" : "Mark done"),
+        h("button", { onclick: (e) => copyText(f.message, e.currentTarget, "Copy text") }, "Copy text"),
+        h("button", { class: "danger", onclick: (e) => busy(e.currentTarget, () => act(async () => {
           if (!arm) { deleteArm = f.id; draw(); return; }
           await api("/api/dev/feedback/" + encodeURIComponent(f.id) + "/delete", { method: "POST", body: "{}" });
-          items = items.filter((x) => x.id !== f.id); deleteArm = null; openCount = items.filter((x) => x.status !== "done").length; draw();
-        }) }, arm ? "Click again to delete for good" : "Delete")));
+          items = items.filter((x) => x.id !== f.id); deleteArm = null; openCount = items.filter((x) => x.status !== "done").length; badge(); draw();
+        })) }, arm ? "Click again to delete for good" : "Delete")));
   }
+  async function act(fn) { try { await fn(); } catch (ex) { if (locked(ex, body)) return; list.prepend(banner("err", ex.message)); } }
   chipsRow(); draw();
-  body.replaceChildren(bar, list);
-  const b = document.querySelectorAll(".tabs button")[1]; b.querySelector(".badge")?.remove(); if (openCount) b.append(h("span", { class: "badge" }, openCount));
+  body.replaceChildren(h("div", { class: "toolbar" }, search, exportBtn), bar, list);
 }
 
 async function tabServers(body) {
+  body.replaceChildren(skRows(4));
   let j; try { j = await api("/api/dev/guilds"); } catch (ex) { locked(ex, body); return; }
-  const rows = j.guilds.map((g) => h("div", { class: "card sv" },
-    g.icon ? h("img", { class: "ic", src: g.icon, alt: "" }) : h("div", { class: "ic", "aria-hidden": "true" }, (g.name || "?").slice(0, 1).toUpperCase()),
-    h("div", null, h("b", null, g.name), h("span", null, num(g.members) + " members · ID " + g.id + (g.owner_name ? " · owner " + g.owner_name : ""))),
-    g.blocked ? h("span", { class: "pill bug tag" }, "Blocked") : null));
-  body.replaceChildren(
-    h("div", { class: "row" }, h("span", { class: "muted" }, num(j.guilds.length) + " servers"), h("a", { class: "btn", href: "dashboard.html#/dev" }, "Remove or block a server")),
-    h("div", { class: "list" }, rows));
+  let q = "", sortBy = "name";
+  const list = h("div", { class: "list" }), count = h("span", { class: "muted" });
+  const sorters = { name: (a, b) => a.name.localeCompare(b.name), members: (a, b) => (b.members || 0) - (a.members || 0),
+    newest: (a, b) => (b.joined || 0) - (a.joined || 0), oldest: (a, b) => (a.joined || Infinity) - (b.joined || Infinity) };
+  const view = () => j.guilds.filter((g) => !q || (g.name + " " + g.id + " " + (g.owner_name || "")).toLowerCase().includes(q)).sort(sorters[sortBy]);
+  function draw() {
+    const rows = view(); count.textContent = rows.length + " of " + num(j.guilds.length) + " servers";
+    list.replaceChildren(...(rows.length ? rows.map((g) => h("div", { class: "card sv rise" },
+      g.icon ? h("img", { class: "ic", src: g.icon, alt: "" }) : h("div", { class: "ic", "aria-hidden": "true" }, (g.name || "?").slice(0, 1).toUpperCase()),
+      h("div", { class: "info" }, h("b", null, g.name), h("span", null, num(g.members) + " members · ID " + g.id + (g.owner_name ? " · owner " + g.owner_name : "") + (g.joined ? " · added " + ago(g.joined) : ""))),
+      g.blocked ? h("span", { class: "pill bug" }, "Blocked") : null,
+      h("div", { class: "acts" }, h("a", { class: "btn chip", href: "dashboard.html#/g/" + encodeURIComponent(g.id) + "/overview" }, "Dashboard"),
+        h("button", { class: "chip", onclick: (e) => copyText(g.id, e.currentTarget, "Copy ID") }, "Copy ID")))) : [h("div", { class: "empty card" }, "No servers match.")]));
+  }
+  const search = h("input", { type: "search", placeholder: "Search name, ID or owner", "aria-label": "Search servers", oninput: (e) => { q = e.target.value.trim().toLowerCase(); draw(); } });
+  const sel = h("select", { "aria-label": "Sort servers", onchange: (e) => { sortBy = e.target.value; draw(); } },
+    [["name", "Name"], ["members", "Most members"], ["newest", "Recently added"], ["oldest", "Longest with Spectre"]].map(([v, l]) => h("option", { value: v }, l)));
+  const exp = h("button", { onclick: () => csvDownload("spectre-servers.csv", [["id", "name", "members", "owner_id", "owner_name", "added_utc", "created_utc", "blocked"],
+    ...view().map((g) => [g.id, g.name, g.members, g.owner_id, g.owner_name, iso(g.joined), iso(g.created), g.blocked ? "yes" : ""])]) }, "Export CSV");
+  draw();
+  body.replaceChildren(h("div", { class: "toolbar" }, search, sel, exp, h("a", { class: "btn", href: "dashboard.html#/dev" }, "Remove or block a server")), h("p", { class: "stamp" }, count), list);
+}
+
+async function tabActivity(body) {
+  body.replaceChildren(skRows(3));
+  let j; try { j = await api("/api/dev/history"); } catch (ex) { locked(ex, body); return; }
+  const blockedBox = h("div", { class: "list" }), arm = { id: null };
+  function drawBlocked() {
+    blockedBox.replaceChildren(...(j.blocked.length ? j.blocked.map((b) => h("div", { class: "card sv rise" },
+      h("div", { class: "info" }, h("b", null, "Server " + b.id), h("span", null, (b.reason || "No reason saved") + (b.at ? " · " + ago(b.at) : ""))),
+      h("div", { class: "acts" }, h("button", { class: "danger chip", onclick: (e) => busy(e.currentTarget, async () => {
+        if (arm.id !== b.id) { arm.id = b.id; drawBlocked(); return; }
+        try { await api("/api/dev/unblock", { method: "POST", body: JSON.stringify({ guild_id: b.id }) }); j.blocked = j.blocked.filter((x) => x.id !== b.id); arm.id = null; drawBlocked(); }
+        catch (ex) { if (!locked(ex, body)) blockedBox.prepend(banner("err", ex.message)); }
+      }) }, arm.id === b.id ? "Click again to unblock" : "Unblock")))) : [h("div", { class: "empty card" }, "No servers are blocked.")]));
+  }
+  drawBlocked();
+  const acts = j.actions.length ? j.actions.map((a) => h("div", { class: "card item rise" },
+    h("div", { class: "top" }, h("span", { class: "pill" + (a.action === "unblocked" ? " done" : " bug") }, String(a.action || "action")), a.blocked ? h("span", { class: "pill raid" }, "Blocked") : null,
+      a.notified ? h("span", { class: "pill suggestion" }, "Owner notified") : null, h("span", { class: "when", title: a.at ? new Date(a.at * 1000).toLocaleString() : "" }, a.at ? ago(a.at) : "")),
+    h("p", null, (a.guild_name || "Server " + a.guild_id) + (a.reason ? ": " + a.reason : "")),
+    h("dl", null, h("div", null, h("dt", null, "By"), h("dd", null, a.by_name || a.by))))) : [h("div", { class: "empty card" }, "No developer actions yet.")];
+  body.replaceChildren(h("h2", null, "Blocklist"), blockedBox, h("h2", { style: "margin-top:28px" }, "Recent developer actions"), h("div", { class: "tl" }, acts));
 }
 
 function tabTools(body) {
-  const t = (href, title, text, ext) => h("a", { href, target: ext ? "_blank" : null, rel: ext ? "noopener" : null }, h("b", null, title), h("span", null, text));
+  const link = (href, title, text, ext) => h("a", { href, target: ext ? "_blank" : null, rel: ext ? "noopener" : null }, h("b", null, title), h("span", null, text));
+  const out = h("p", { class: "out", role: "status" }, "");
+  const health = h("button", { onclick: (e) => busy(e.currentTarget, async () => {
+    const t0 = performance.now();
+    try { const r = await fetch(API + "/health", { cache: "no-store" }); const j = await r.json(); const ms = Math.round(performance.now() - t0);
+      out.className = "out " + (r.ok && j.ok ? "ok" : "bad"); out.textContent = (r.ok && j.ok ? "API is up" : "API answered with a problem") + " · " + ms + " ms round trip";
+    } catch (ex) { out.className = "out bad"; out.textContent = "Couldn't reach the API."; }
+  }) }, "Run health check");
+  const lockNow = h("button", { class: "danger", onclick: (e) => busy(e.currentTarget, async () => { try { await api("/api/dev/lock", { method: "POST", body: "{}" }); } catch (ex) {} clearInterval(statusTimer); viewUnlock(banner("ok", "Developer Mode locked.")); }) }, "Lock now");
   body.replaceChildren(h("div", { class: "tools" },
-    t("dashboard.html#/dev", "Developer Mode", "Server list, removal with a rule, blocklist and the action history."),
-    t("dashboard.html", "Server dashboard", "Open any server's settings and analytics (Developer Mode must be on)."),
-    t(API + "/health", "API health", "Returns ok when the bot's web server is up.", true),
-    t("https://discord.gg/2TRn6c24au", "Support server", "Where users ask for help.", true),
-    t("terms.html", "Terms of Use", "The rules the removal reasons point to."),
-    t("privacy.html", "Privacy Policy", "What Spectre stores and why.")));
+    h("div", { class: "card rise" }, h("b", null, "API health check"), h("span", null, "Checks the bot's web server and measures the round trip from your browser."), health, out),
+    h("div", { class: "card rise" }, h("b", null, "Your Discord ID"), h("span", null, me ? me.id : ""), h("button", { onclick: (e) => copyText(me.id, e.currentTarget, "Copy ID") }, "Copy ID")),
+    h("div", { class: "card rise" }, h("b", null, "Lock Developer Mode"), h("span", null, "End your unlocked session now instead of waiting 15 minutes."), lockNow),
+    link("dashboard.html#/dev", "Developer Mode", "Removal with a rule, plus the full history and blocklist."),
+    link("dashboard.html", "Server dashboard", "Open any server's settings and analytics (Developer Mode must be on)."),
+    link(API + "/health", "API health (raw)", "Returns ok when the bot's web server is up.", true),
+    link("https://discord.gg/2TRn6c24au", "Support server", "Where users ask for help.", true),
+    link("terms.html", "Terms of Use", "The rules the removal reasons point to."),
+    link("privacy.html", "Privacy Policy", "What Spectre stores and why.")));
 }
 
 (async function init() {
@@ -262,7 +372,7 @@ function tabTools(body) {
     viewConsole();
   } catch (ex) {
     if (ex.status === 401) { me = null; showMe(); return viewLogin(note); }
-    setApp(banner("err", ex.message), h("p", null, h("button", { onclick: init }, "Try again")));
+    setApp(banner("err", ex.message), h("p", null, h("button", { onclick: (e) => busy(e.currentTarget, init) }, "Try again")));
   }
 })();
 </script>
