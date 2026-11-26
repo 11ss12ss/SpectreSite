@@ -45,6 +45,36 @@ button.busy { cursor:progress; opacity:.85; }
 .errcode { font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.85em; opacity:.8; white-space:nowrap; }
 @media (prefers-reduced-motion: reduce) { .spinner,.skel,.skel::before { animation-duration:2.5s; } }
 button[disabled] { opacity:.45; cursor:not-allowed; }
+.pn-grid { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:22px; align-items:start; }
+.pn-side { position:sticky; top:12px; }
+@media (max-width:880px) { .pn-grid { grid-template-columns:minmax(0,1fr); } .pn-side { position:static; } }
+.pb { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px; margin-bottom:10px; }
+.pb-top { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px; }
+.pb-top button { padding:7px 11px; }
+.pf { display:flex; flex-direction:column; gap:5px; margin:0 0 10px; font-size:.85rem; color:var(--muted); }
+.pf2 { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px; }
+@media (max-width:520px) { .pf2 { grid-template-columns:minmax(0,1fr); } }
+.po { border:1px solid var(--line); border-radius:12px; padding:12px; margin:0 0 10px; background:var(--soft); }
+.pv-box { background:#2b2d31; color:#dbdee1; border-left:4px solid #7C5CFF; border-radius:8px; padding:14px 16px; font:400 .95rem/1.45 "gg sans",system-ui,sans-serif; overflow-wrap:anywhere; }
+.pv-box > * + * { margin-top:10px; }
+.pv-md > div { min-height:1.2em; }
+.pv-h1 { font-size:1.5rem; font-weight:700; line-height:1.2; } .pv-h2 { font-size:1.25rem; font-weight:700; line-height:1.25; } .pv-h3 { font-size:1.05rem; font-weight:700; }
+.pv-sub { font-size:.8rem; color:#949ba4; }
+.pv-box code { background:#1e1f22; border-radius:4px; padding:1px 5px; font-size:.88em; }
+.pv-link { color:#00a8fc; }
+.pv-sec { display:flex; gap:14px; justify-content:space-between; align-items:flex-start; }
+.pv-thumb { width:84px; height:84px; object-fit:cover; border-radius:8px; flex:none; }
+.pv-img { display:block; max-width:100%; border-radius:8px; }
+.pv-empty { border:1px dashed #4e5058; padding:34px 10px; text-align:center; color:#949ba4; }
+.pv-hr { border:0; border-top:1px solid #4e5058; margin:12px 0; } .pv-hr.big { margin:22px 0; }
+.pv-selwrap { position:relative; }
+.pv-select { width:100%; display:flex; justify-content:space-between; background:#1e1f22; border:1px solid #1e1f22; border-radius:8px; color:#949ba4; padding:11px 14px; font:400 .95rem system-ui,sans-serif; }
+.pv-opts { margin-top:6px; background:#1e1f22; border-radius:8px; padding:6px; }
+.pv-opt { display:block; width:100%; text-align:left; border:0; border-radius:6px; background:none; padding:8px 10px; color:#dbdee1; }
+.pv-opt:hover { background:#35373c; border-color:transparent; } .pv-opt span { display:block; font-size:.8rem; font-weight:400; color:#949ba4; }
+.pv-links { display:flex; flex-wrap:wrap; gap:8px; }
+.pv-btn { background:#4e5058; border-radius:8px; padding:8px 14px; font-size:.88rem; font-weight:600; }
+.pv-reply { margin-top:14px; }
 h1 { font:800 clamp(2rem,6vw,3rem)/1.05 var(--font); letter-spacing:-.03em; margin:8px 0 10px; }
 h2 { font:700 1.25rem/1.2 var(--font); margin:0 0 14px; letter-spacing:-.01em; }
 h3 { font:600 .8rem/1 var(--font); letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:0 0 14px; }
@@ -214,7 +244,7 @@ function showMe() {
 async function logout() { try { await api("/api/logout", { method: "POST", body: "{}" }); } catch (e) {} me = null; isOwner = devUnlocked = false; location.hash = "#/"; viewLogin(); }
 
 /* ---------------------------------------------------------------- server shell + tabs */
-const TABS = [["overview", "Overview"], ["analytics", "Analytics"], ["settings", "Settings"]];
+const TABS = [["overview", "Overview"], ["analytics", "Analytics"], ["panels", "Panels"], ["settings", "Settings"]];
 let current = null;
 
 async function openGuild(id, tab) {
@@ -236,6 +266,7 @@ async function openGuild(id, tab) {
   try {
     if (tab === "overview") renderOverview(body, ov);
     else if (tab === "analytics") await renderAnalytics(body, id, 30);
+    else if (tab === "panels") await renderPanels(body, id);
     else await renderSettings(body, id);
   } catch (e) { clear(body).append(banner("err", e.message)); }
 }
@@ -252,6 +283,219 @@ function renderOverview(box, ov) {
       h("p", { class: "muted", style: "margin:14px 0 0" }, ov.modules_disabled.length
         ? "Switched off in this server: " + ov.modules_disabled.join(", ") + "."
         : "All Spectre modules are switched on.")));
+}
+
+/* ---------------------------------------------------------------- panel builder (Discord Components V2) */
+const BLOCK_NAMES = { text: "Text", header: "Header", image: "Picture", divider: "Divider", select: "Dropdown", links: "Link buttons" };
+const BLOCK_NEW = {
+  text: () => ({ type: "text", text: "Write something here. **Bold**, *italic*, and [links](https://example.com) work." }),
+  header: () => ({ type: "header", text: "## A big title\nA short description.", thumb: "" }),
+  image: () => ({ type: "image", url: "" }),
+  divider: () => ({ type: "divider", large: false }),
+  select: () => ({ type: "select", placeholder: "Choose an option", options: [{ label: "First option", description: "", emoji: "", title: "", text: "What people see when they pick this.", image: "" }] }),
+  links: () => ({ type: "links", buttons: [{ label: "Open", url: "https://" }] }),
+};
+
+function pnCount(blocks) {
+  let n = 1;
+  for (const b of blocks) {
+    if (b.type === "header") n += b.thumb ? 3 : 1;
+    else if (b.type === "image") n += 2;
+    else if (b.type === "select") n += 2;
+    else if (b.type === "links") n += 1 + b.buttons.length;
+    else n += 1;
+  }
+  return n;
+}
+function pnText(blocks) {
+  let n = 0;
+  for (const b of blocks) { n += (b.text || "").length; if (b.type === "links") for (const x of b.buttons) n += x.label.length; }
+  return n;
+}
+
+/* a small, safe Discord-markdown renderer for the live preview (builds DOM nodes, never HTML) */
+function mdInline(s) {
+  const out = [], re = /(\*\*[^*]+\*\*|__[^_]+__|~~[^~]+~~|\*[^*\n]+\*|_[^_\n]+_|`[^`\n]+`|\[[^\]\n]+\]\(https:\/\/[^)\s]+\))/g;
+  let last = 0, m;
+  while ((m = re.exec(s))) {
+    if (m.index > last) out.push(s.slice(last, m.index));
+    const t = m[0];
+    if (t.startsWith("**")) out.push(h("strong", null, mdInline(t.slice(2, -2))));
+    else if (t.startsWith("__")) out.push(h("u", null, mdInline(t.slice(2, -2))));
+    else if (t.startsWith("~~")) out.push(h("s", null, mdInline(t.slice(2, -2))));
+    else if (t.startsWith("`")) out.push(h("code", null, t.slice(1, -1)));
+    else if (t.startsWith("[")) { const i = t.indexOf("]("); out.push(h("span", { class: "pv-link" }, t.slice(1, i))); }
+    else out.push(h("em", null, t.slice(1, -1)));
+    last = m.index + t.length;
+  }
+  if (last < s.length) out.push(s.slice(last));
+  return out;
+}
+function mdBlock(text) {
+  const box = h("div", { class: "pv-md" });
+  for (const line of text.split("\n")) {
+    const hm = /^(#{1,3})\s+(.*)$/.exec(line), sm = /^-#\s+(.*)$/.exec(line), bm = /^\s*[-*]\s+(.*)$/.exec(line);
+    if (hm) box.append(h("div", { class: "pv-h" + hm[1].length }, mdInline(hm[2])));
+    else if (sm) box.append(h("div", { class: "pv-sub" }, mdInline(sm[1])));
+    else if (bm) box.append(h("div", { class: "pv-li" }, "• ", mdInline(bm[1])));
+    else box.append(h("div", { class: "pv-line" }, line ? mdInline(line) : h("br")));
+  }
+  return box;
+}
+
+function pnPreview(p, reply) {
+  const box = h("div", { class: "pv-box", style: p.accent ? `border-left-color:${p.accent}` : "" });
+  for (const b of p.blocks) {
+    if (b.type === "text") box.append(mdBlock(b.text));
+    else if (b.type === "header") box.append(h("div", { class: "pv-sec" }, mdBlock(b.text), b.thumb ? h("img", { class: "pv-thumb", src: b.thumb, alt: "" }) : null));
+    else if (b.type === "image") box.append(b.url ? h("img", { class: "pv-img", src: b.url, alt: "" }) : h("div", { class: "pv-img pv-empty" }, "Picture link goes here"));
+    else if (b.type === "divider") box.append(h("hr", { class: "pv-hr" + (b.large ? " big" : "") }));
+    else if (b.type === "select") {
+      const list = h("div", { class: "pv-opts", hidden: true });
+      const head = h("button", { type: "button", class: "pv-select" }, h("span", null, b.placeholder || "Choose an option"), h("span", { "aria-hidden": "true" }, "⌄"));
+      head.onclick = () => { list.hidden = !list.hidden; };
+      b.options.forEach((o) => list.append(h("button", { type: "button", class: "pv-opt", onclick: () => { list.hidden = true; reply(o); } },
+        h("b", null, (o.emoji ? o.emoji + " " : "") + (o.label || "…")), o.description ? h("span", null, o.description) : null)));
+      box.append(h("div", { class: "pv-selwrap" }, head, list));
+    } else if (b.type === "links") box.append(h("div", { class: "pv-links" }, b.buttons.map((x) => h("span", { class: "pv-btn" }, (x.label || "…") + " ↗"))));
+  }
+  return box;
+}
+
+async function renderPanels(box, id) {
+  const d = await api(`/api/guilds/${id}/panels`);
+  const L = d.limits;
+  const view = h("div");
+  box.append(view);
+  let list = d.panels;
+
+  function showList(note) {
+    clear(view);
+    add(view, note ? banner("ok", note) : null,
+      h("div", { class: "row", style: "justify-content:space-between;margin-bottom:6px" }, h("h2", { style: "margin:0" }, "Panels"),
+        h("button", { class: "primary", disabled: list.length >= L.panels, onclick: () => edit({ id: null, ...JSON.parse(JSON.stringify(d.starter)), channel_id: null, posted: false }) }, "+ New panel")),
+      h("p", { class: "muted", style: "margin:0 0 16px" }, "Pretty messages with pictures, a dropdown that answers privately, and link buttons. Design one here, then post it to any channel."),
+      d.enabled ? null : banner("err", "The Panels module is switched off in this server (Settings → Modules). Dropdowns won't answer until you turn it on."),
+      list.length ? h("div", { class: "grid" }, list.map((p) => h("button", { class: "sv", onclick: () => edit(JSON.parse(JSON.stringify(p))) },
+        h("div", { class: "ic", "aria-hidden": "true" }, "▤"), h("div", null, h("b", null, p.name),
+          h("span", null, p.posted ? "Posted in #" + ((d.channels.find((c) => c.id === p.channel_id) || {}).name || "a channel") : "Not posted yet")))))
+        : h("div", { class: "card" }, h("p", { style: "margin:0" }, "No panels yet. Press ", h("b", null, "+ New panel"), " to design your first one.")));
+  }
+
+  function edit(p) {
+    clear(view);
+    let dirty = !p.id, replyBox = h("div");
+    const msg = h("div"), preview = h("div"), blocksBox = h("div"), meter = h("p", { class: "muted", style: "margin:8px 0 0;font-size:.85rem" });
+    const note = (kind, text) => { clear(msg).append(banner(kind, text)); msg.scrollIntoView({ block: "nearest" }); };
+    const changed = () => { dirty = true; paint(); };
+
+    function paint() {
+      clear(preview).append(pnPreview(p, (o) => {
+        clear(replyBox).append(h("div", { class: "pv-reply" }, h("small", { class: "muted" }, "Only the person who picked it sees this:"),
+          h("div", { class: "pv-box" }, h("div", { class: "pv-h3" }, o.title || o.label), mdBlock(o.text || ""), o.image ? h("img", { class: "pv-img", src: o.image, alt: "" }) : null)));
+      }));
+      const c = pnCount(p.blocks), t = pnText(p.blocks);
+      meter.textContent = `${c}/${L.components} Discord parts used · ${t}/${L.text} characters of text`;
+      meter.style.color = c > L.components || t > L.text ? "var(--rose)" : "";
+      savebtn.textContent = dirty ? "Save changes" : "Saved";
+    }
+
+    const fld = (label, input) => h("label", { class: "pf" }, h("span", null, label), input);
+    const txt = (obj, key, ph, max, area) => {
+      const el = area ? h("textarea", { rows: 4, maxlength: max, placeholder: ph || "" }) : h("input", { type: "text", maxlength: max, placeholder: ph || "" });
+      el.value = obj[key] || ""; el.addEventListener("input", () => { obj[key] = el.value; changed(); }); return el;
+    };
+
+    function drawBlocks() {
+      clear(blocksBox);
+      p.blocks.forEach((b, i) => {
+        const body = h("div", { class: "pb-body" });
+        if (b.type === "text") add(body, fld("Text (Discord markdown works)", txt(b, "text", "", 2000, true)));
+        else if (b.type === "header") add(body, fld("Text (start a line with # for a big title)", txt(b, "text", "", 2000, true)), fld("Small picture on the right (https link, optional)", txt(b, "thumb", "https://…", 500)));
+        else if (b.type === "image") add(body, fld("Picture link (https)", txt(b, "url", "https://…", 500)));
+        else if (b.type === "divider") {
+          const cb = h("input", { type: "checkbox", checked: !!b.large, onchange: (e) => { b.large = e.target.checked; changed(); } });
+          add(body, h("label", { class: "chk" }, cb, h("span", null, "Extra spacing")));
+        } else if (b.type === "select") {
+          add(body, fld("Text shown on the dropdown", txt(b, "placeholder", "Choose an option", 100)));
+          b.options.forEach((o, j) => add(body, h("div", { class: "po" },
+            h("div", { class: "row", style: "justify-content:space-between" }, h("b", null, "Option " + (j + 1)),
+              h("button", { type: "button", disabled: b.options.length < 2, onclick: () => { b.options.splice(j, 1); drawBlocks(); changed(); } }, "Remove")),
+            h("div", { class: "pf2" }, fld("Name", txt(o, "label", "Rules", 100)), fld("Emoji", txt(o, "emoji", "📜", 64))),
+            fld("Small description (optional)", txt(o, "description", "", 100)),
+            fld("Private reply title", txt(o, "title", "Same as the name", 100)),
+            fld("Private reply text", txt(o, "text", "", 1800, true)),
+            fld("Reply picture (https link, optional)", txt(o, "image", "https://…", 500)))));
+          add(body, h("button", { type: "button", disabled: b.options.length >= L.options, onclick: () => { b.options.push({ label: "New option", description: "", emoji: "", title: "", text: "Reply text.", image: "" }); drawBlocks(); changed(); } }, "+ Add option"));
+        } else if (b.type === "links") {
+          b.buttons.forEach((x, j) => add(body, h("div", { class: "po" },
+            h("div", { class: "pf2" }, fld("Button text", txt(x, "label", "Website", 80)), fld("Link (https)", txt(x, "url", "https://…", 500))),
+            h("button", { type: "button", disabled: b.buttons.length < 2, onclick: () => { b.buttons.splice(j, 1); drawBlocks(); changed(); } }, "Remove button"))));
+          add(body, h("button", { type: "button", disabled: b.buttons.length >= L.links, onclick: () => { b.buttons.push({ label: "Open", url: "https://" }); drawBlocks(); changed(); } }, "+ Add button"));
+        }
+        const move = (to) => { const x = p.blocks.splice(i, 1)[0]; p.blocks.splice(to, 0, x); drawBlocks(); changed(); };
+        add(blocksBox, h("div", { class: "pb" },
+          h("div", { class: "pb-top" }, h("b", null, BLOCK_NAMES[b.type]),
+            h("span", { class: "row" },
+              h("button", { type: "button", "aria-label": "Move up", disabled: i === 0, onclick: () => move(i - 1) }, "↑"),
+              h("button", { type: "button", "aria-label": "Move down", disabled: i === p.blocks.length - 1, onclick: () => move(i + 1) }, "↓"),
+              h("button", { type: "button", "aria-label": "Remove block", onclick: () => { p.blocks.splice(i, 1); drawBlocks(); changed(); } }, "✕"))),
+          body));
+      });
+    }
+
+    const nameIn = txt(p, "name", "Panel name", 40);
+    const colorIn = h("input", { type: "color", value: p.accent || "#7C5CFF", "aria-label": "Panel colour", style: "width:56px;height:40px;padding:2px" });
+    colorIn.addEventListener("input", () => { p.accent = colorIn.value.toUpperCase(); changed(); });
+    const addSel = h("select", { "aria-label": "Add a block" }, h("option", { value: "" }, "+ Add a block…"), Object.entries(BLOCK_NAMES).map(([k, n]) => h("option", { value: k }, n)));
+    addSel.onchange = () => { if (!addSel.value) return; if (p.blocks.length >= L.blocks) { note("err", `A panel can have at most ${L.blocks} blocks.`); } else { p.blocks.push(BLOCK_NEW[addSel.value]()); drawBlocks(); changed(); } addSel.value = ""; };
+
+    async function run(btn, label, fn) {
+      btn.disabled = true; btn.classList.add("busy"); btn.textContent = ""; btn.append(h("span", { class: "spinner", "aria-hidden": "true" }), "Please wait…");
+      try { await fn(); } catch (e) { note("err", e.message || "Something went wrong."); }
+      btn.disabled = false; btn.classList.remove("busy"); btn.textContent = label; paint();
+    }
+    const body = () => ({ name: p.name, accent: p.accent || "", blocks: p.blocks });
+    async function save() {
+      const r = await api(`/api/guilds/${id}/panels/${p.id || "new"}`, { method: "PUT", body: JSON.stringify(body()) });
+      p.id = r.panel.id; p.posted = r.panel.posted; p.channel_id = r.panel.channel_id; dirty = false;
+      const i = list.findIndex((x) => x.id === p.id); const copy = JSON.parse(JSON.stringify(r.panel)); if (i >= 0) list[i] = copy; else list.unshift(copy);
+      if (r.warning) note("err", "Saved, but the message in Discord wasn't updated: " + r.warning); else note("ok", r.updated_message ? "Saved. The message in Discord is updated too." : "Saved.");
+    }
+    const savebtn = h("button", { class: "primary", type: "button" }, "Save changes");
+    savebtn.onclick = () => run(savebtn, "Save changes", save);
+    const chSel = h("select", { "aria-label": "Channel to post in" }, h("option", { value: "" }, "Choose a channel…"),
+      d.channels.map((c) => h("option", { value: c.id, selected: c.id === p.channel_id }, "# " + c.name)));
+    const postbtn = h("button", { type: "button" }, p.posted ? "Update in Discord" : "Post to channel");
+    postbtn.onclick = () => run(postbtn, p.posted ? "Update in Discord" : "Post to channel", async () => {
+      if (!chSel.value) throw { message: "Choose a channel first." };
+      await save();
+      const r = await api(`/api/guilds/${id}/panels/${p.id}/post`, { method: "POST", body: JSON.stringify({ channel_id: chSel.value }) });
+      p.posted = true; p.channel_id = r.panel.channel_id; const i = list.findIndex((x) => x.id === p.id); if (i >= 0) list[i] = JSON.parse(JSON.stringify(r.panel));
+      note("ok", "Posted in #" + ((d.channels.find((c) => c.id === p.channel_id) || {}).name || "the channel") + ".");
+    });
+    const delbtn = h("button", { type: "button", style: "border-color:rgba(255,120,140,.55)" }, "Delete panel");
+    delbtn.onclick = () => {
+      if (!p.id) { showList(); return; }
+      clear(msg).append(h("div", { class: "banner err" }, h("p", { style: "margin:0 0 10px" }, "Delete this panel" + (p.posted ? " and its message in Discord" : "") + "? This can't be undone."),
+        h("div", { class: "row" }, h("button", { type: "button", onclick: () => run(delbtn, "Delete panel", async () => {
+          await api(`/api/guilds/${id}/panels/${p.id}/delete`, { method: "POST", body: "{}" }); list = list.filter((x) => x.id !== p.id); showList("Panel deleted.");
+        }) }, "Yes, delete it"), h("button", { type: "button", onclick: () => clear(msg) }, "Keep it"))));
+    };
+    const back = h("button", { type: "button", onclick: () => { if (!dirty || confirm("You have unsaved changes. Leave without saving?")) showList(); } }, "← All panels");
+
+    add(view, h("div", { class: "row", style: "justify-content:space-between;margin-bottom:14px" }, back, savebtn), msg,
+      h("div", { class: "pn-grid" },
+        h("div", null,
+          h("div", { class: "card", style: "margin-bottom:14px" }, h("div", { class: "pf2" }, fld("Panel name (only you see this)", nameIn), fld("Colour", colorIn))),
+          blocksBox, h("div", { style: "margin-top:12px" }, addSel), meter,
+          h("div", { class: "card", style: "margin-top:16px" }, h("h3", null, "Post it"), h("div", { class: "pf2" }, fld("Channel", chSel), h("div", { class: "pf", style: "justify-content:flex-end" }, postbtn)),
+            h("p", { class: "muted", style: "margin:10px 0 0;font-size:.85rem" }, "Saving a posted panel updates its message too. You can also use /panel post in Discord.")),
+          h("div", { style: "margin-top:16px" }, delbtn)),
+        h("div", { class: "pn-side" }, h("h3", null, "Live preview"), preview, replyBox)));
+    drawBlocks(); paint();
+  }
+  showList();
 }
 
 /* ---------------------------------------------------------------- analytics */
